@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2216%22%20fill%3D%22%237B1D2D%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2213.5%22%20fill%3D%22none%22%20stroke%3D%22%23C8973A%22%20stroke-width%3D%221.5%22%2F%3E%3Ctext%20x%3D%2216%22%20y%3D%2221%22%20text-anchor%3D%22middle%22%20fill%3D%22%23C8973A%22%20font-size%3D%229%22%20font-weight%3D%22900%22%20font-family%3D%22sans-serif%22%3E%E0%B8%AA%E0%B8%AD%E0%B8%A8.%3C%2Ftext%3E%3C%2Fsvg%3E" />
+  <title>DVE System — ระบบทวิภาคี สอศ.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, #root { height: 100%; margin: 0; padding: 0; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes barGrow { from { transform:scaleY(0) } to { transform:scaleY(1) } }
+    @keyframes spin { to { transform:rotate(360deg) } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  </style>
+</helmet>
+<div style="{{ rootStyle }}">{{ pageContent }}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    theme:'system', systemDark:false,
+    page:'public',
+    loggedIn:false, role:null, name:'', inst:'',
+    sidebar:true,
+    notif:false, notifN:4,
+    lRole:'student', lInst:'', lSid:'', lNid:'', lUser:'', lPass:'', lLoad:false,
+    rTab:'all', rSearch:'', rSel:null, showForm:false, fStep:0, fLastCode:'',
+    fData:{ type:'ฝึกงาน (ระบบปกติ)', entName:'', start:'2568-07-01', end:'2568-08-31' },
+    entSearch:'', entTab:'list', dgOpen:null,
+    finTab:'overview',
+    pppTab:'estates',
+    supTab:'list',
+    repType:'internship',
+    // ── API data (preloaded with demo values; overwritten from API) ──────
+    dKpi:{stud:285432,intern:42187,ent:8935,col:423,sup:12847,ppp:45},
+    dTrend:[
+      {v:28450,y:'2562',vl:'28.4K'},{v:25123,y:'2563',vl:'25.1K'},
+      {v:26891,y:'2564',vl:'26.9K'},{v:34567,y:'2565',vl:'34.6K'},
+      {v:38901,y:'2566',vl:'38.9K'},{v:42187,y:'2567',vl:'42.2K'},
+    ],
+    dProv:[
+      {v:8245,label:'กทม.',short:'8.2K'},{v:5123,label:'ชลบุรี',short:'5.1K'},
+      {v:3891,label:'น.ราชสีมา',short:'3.9K'},{v:3456,label:'เชียงใหม่',short:'3.5K'},
+      {v:3124,label:'ขอนแก่น',short:'3.1K'},{v:2987,label:'สมุทรปราการ',short:'3.0K'},
+      {v:2765,label:'ปทุมธานี',short:'2.8K'},{v:2543,label:'ระยอง',short:'2.5K'},
+      {v:2234,label:'สุราษฎร์ธานี',short:'2.2K'},{v:1987,label:'ภูเก็ต',short:'2.0K'},
+    ],
+    dFields:[
+      {v:35,label:'ช่างอุตสาหกรรม',color:'#7B1D2D'},{v:28,label:'พาณิชยกรรม',color:'#C8973A'},
+      {v:18,label:'เทคโนโลยีสารสนเทศ',color:'#1565A8'},{v:10,label:'คหกรรมศาสตร์',color:'#2E7D52'},
+      {v:9,label:'เกษตรกรรม',color:'#B87D12'},
+    ],
+    dReqs:[
+      {id:'REQ2568-001',name:'นายสมชาย ใจดี',col:'วท.กรุงเทพ',dept:'ช่างยนต์',ent:'บ.ยนตรการ จก.',sta:'รออนุมัติ',dt:'15/06/2568',type:'ฝึกงาน',period:'01/07–31/08/2568'},
+      {id:'REQ2568-002',name:'น.ส.มาลี สวยงาม',col:'วพ.กรุงเทพ',dept:'การบัญชี',ent:'ธ.กรุงไทย',sta:'อนุมัติแล้ว',dt:'14/06/2568',type:'ฝึกอาชีพ',period:'01/07–31/08/2568'},
+      {id:'REQ2568-003',name:'นายวิชัย มุ่งมั่น',col:'วท.ชลบุรี',dept:'ไฟฟ้ากำลัง',ent:'HANA Semiconductor',sta:'ออกหนังสือแล้ว',dt:'13/06/2568',type:'ฝึกงาน',period:'01/06–31/07/2568'},
+      {id:'REQ2568-004',name:'น.ส.อรุณี ขยันดี',col:'วพ.เชียงใหม่',dept:'การตลาด',ent:'โลตัส เชียงใหม่',sta:'รออนุมัติ',dt:'13/06/2568',type:'ฝึกงาน',period:'01/07–31/08/2568'},
+      {id:'REQ2568-005',name:'นายประสิทธิ์ แข็งแกร่ง',col:'วท.ขอนแก่น',dept:'เชื่อมโลหะ',ent:'Amata City ขอนแก่น',sta:'ปฏิเสธ',dt:'12/06/2568',type:'ฝึกอาชีพ',period:'01/07–31/08/2568'},
+      {id:'REQ2568-006',name:'น.ส.รัตนา ใฝ่รู้',col:'วอ.นครราชสีมา',dept:'คอมพิวเตอร์',ent:'DTAC จก.',sta:'อนุมัติแล้ว',dt:'12/06/2568',type:'ฝึกงาน',period:'01/07–31/08/2568'},
+      {id:'REQ2568-007',name:'นายกวิน สุวรรณ',col:'วท.ระยอง',dept:'ช่างกลโรงงาน',ent:'SCG Chemicals',sta:'อยู่ระหว่างฝึก',dt:'01/05/2568',type:'ฝึกอาชีพ',period:'01/05–31/07/2568'},
+    ],
+    dEnts:[
+      {id:'E001',name:'บริษัท ยนตรการ จำกัด',type:'ยานยนต์',prov:'กรุงเทพฯ',cnt:12,al:['บ.ยนตรการ จก.','ยนตรการ']},
+      {id:'E002',name:'ธนาคารกรุงไทย จำกัด (มหาชน)',type:'การเงิน',prov:'กรุงเทพฯ',cnt:45,al:['ธ.กรุงไทย','กรุงไทย']},
+      {id:'E003',name:'HANA Semiconductor (Thailand) Co., Ltd.',type:'อิเล็กทรอนิกส์',prov:'ชลบุรี',cnt:38,al:['ฮานา เซมิคอนดักเตอร์']},
+      {id:'E004',name:'บจก. โลตัส เชียงใหม่',type:'ค้าปลีก',prov:'เชียงใหม่',cnt:8,al:['โลตัส เชียงใหม่']},
+      {id:'E005',name:'บมจ. SCG Chemicals',type:'เคมีภัณฑ์',prov:'ระยอง',cnt:22,al:['SCG Chemicals','SCG เคมิคอล']},
+      {id:'E006',name:'บมจ. ปตท. (PTT Plc.)',type:'พลังงาน',prov:'กรุงเทพฯ',cnt:31,al:['ปตท.','PTT']},
+    ],
+    dDups:[
+      {id:'DG01',can:'Amata City Khon Kaen Co., Ltd.',ent:[
+        {id:'DA1',n:'Amata City Khon Kaen Co., Ltd.',cnt:5,score:100},
+        {id:'DA2',n:'อมตะซิตี้ ขอนแก่น',cnt:3,score:85},
+        {id:'DA3',n:'บ.อมตะซิตี้ ขอนแก่น จก.',cnt:2,score:78},
+      ]},
+      {id:'DG02',can:'บริษัท ปตท. จำกัด (มหาชน)',ent:[
+        {id:'DB1',n:'บริษัท ปตท. จำกัด (มหาชน)',cnt:18,score:100},
+        {id:'DB2',n:'ปตท.',cnt:12,score:82},
+        {id:'DB3',n:'PTT Plc.',cnt:9,score:79},
+        {id:'DB4',n:'บมจ.ปตท.',cnt:4,score:76},
+      ]},
+    ],
+    dFin:[
+      {id:'F01',col:'วท.กรุงเทพ',prov:'กทม.',usage:95,perf:88,zone:'ทั่วไป',alloc:850000,pend:false},
+      {id:'F02',col:'วพ.พระนคร',prov:'กทม.',usage:82,perf:91,zone:'ทั่วไป',alloc:720000,pend:false},
+      {id:'F03',col:'วท.ชลบุรี',prov:'ชลบุรี',usage:76,perf:84,zone:'EEC',alloc:980000,pend:true},
+      {id:'F04',col:'วท.มาบตาพุด',prov:'ระยอง',usage:88,perf:79,zone:'EEC',alloc:1120000,pend:true},
+      {id:'F05',col:'วท.เชียงใหม่',prov:'เชียงใหม่',usage:71,perf:82,zone:'ทั่วไป',alloc:650000,pend:false},
+      {id:'F06',col:'วท.ขอนแก่น',prov:'ขอนแก่น',usage:65,perf:76,zone:'ทั่วไป',alloc:580000,pend:false},
+      {id:'F07',col:'วท.นราธิวาส',prov:'นราธิวาส',usage:58,perf:70,zone:'ชายแดนใต้',alloc:920000,pend:false},
+    ],
+    dPpp:[
+      {id:'P01',name:'นิคมฯ อมตะซิตี้ ชลบุรี',prov:'ชลบุรี',soj:'สอจ.ชลบุรี',co:87,dem:245,fill:180,sta:'ดำเนินการแล้ว'},
+      {id:'P02',name:'นิคมฯ มาบตาพุด',prov:'ระยอง',soj:'สอจ.ระยอง',co:124,dem:312,fill:210,sta:'ดำเนินการแล้ว'},
+      {id:'P03',name:'นิคมฯ อมตะซิตี้ ขอนแก่น',prov:'ขอนแก่น',soj:'สอจ.ขอนแก่น',co:45,dem:134,fill:89,sta:'กำลังดำเนินการ'},
+      {id:'P04',name:'นิคมฯ ภาคเหนือ เชียงใหม่',prov:'เชียงใหม่',soj:'สอจ.เชียงใหม่',co:38,dem:98,fill:45,sta:'กำลังดำเนินการ'},
+      {id:'P05',name:'นิคมฯ สมุทรปราการ',prov:'สมุทรปราการ',soj:'สอจ.สมุทรปราการ',co:156,dem:421,fill:312,sta:'ดำเนินการแล้ว'},
+    ],
+    dSup:[
+      {id:'S01',st:'นายสมชาย ใจดี',col:'วท.กรุงเทพ',ent:'บ.ยนตรการ จก.',sv:'ว่าที่ร.ต.วิเชียร',nv:'20/06/2568',vis:2,sta:'ปกติ'},
+      {id:'S02',st:'น.ส.มาลี สวยงาม',col:'วพ.กรุงเทพ',ent:'ธ.กรุงไทย',sv:'อ.สุภาพ',nv:'18/06/2568',vis:1,sta:'ปกติ'},
+      {id:'S03',st:'นายวิชัย มุ่งมั่น',col:'วท.ชลบุรี',ent:'HANA Semiconductor',sv:'ว่าที่ร.ต.ปิยะ',nv:'25/06/2568',vis:3,sta:'ต้องติดตาม'},
+      {id:'S04',st:'นายกวิน สุวรรณ',col:'วท.ระยอง',ent:'SCG Chemicals',sv:'อ.นิรันดร์',nv:'22/06/2568',vis:2,sta:'ปกติ'},
+      {id:'S05',st:'น.ส.อรุณี ขยันดี',col:'วพ.เชียงใหม่',ent:'โลตัส เชียงใหม่',sv:'อ.ศิริพร',nv:'19/06/2568',vis:1,sta:'ขาดการติดต่อ'},
+    ],
+    dNotifs:[
+      {id:1,txt:'คำร้องใหม่จาก นายสมชาย ใจดี',t:'5 นาทีที่แล้ว',is_read:false},
+      {id:2,txt:'อนุมัติ REQ2568-002 แล้ว',t:'1 ชั่วโมงที่แล้ว',is_read:false},
+      {id:3,txt:'ครูวิเชียรบันทึกผลนิเทศ',t:'3 ชั่วโมงที่แล้ว',is_read:false},
+      {id:4,txt:'ตรวจพบสถานประกอบการซ้ำ 2 กลุ่ม',t:'1 วันที่แล้ว',is_read:false},
+    ],
+  };
+
+  componentDidMount() {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    this.setState({ systemDark: mq.matches });
+    mq.addEventListener('change', e => this.setState({ systemDark: e.matches }));
+    this.loadData();
+  }
+
+  api = async (path, opts = {}) => {
+    const r = await fetch('/api/' + path, {
+      ...opts,
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    const j = await r.json();
+    if (!j.success) throw new Error(j.error || 'API error');
+    return j.data;
+  }
+
+  loadData = async () => {
+    try {
+      const [kpi, trend, prov, fields, reqs, ents, dups, fin, ppp, sup, notifs] = await Promise.all([
+        this.api('kpi.php'),
+        this.api('kpi.php?type=trend'),
+        this.api('kpi.php?type=province'),
+        this.api('kpi.php?type=fields'),
+        this.api('requests.php'),
+        this.api('enterprises.php'),
+        this.api('enterprises.php?type=duplicates'),
+        this.api('finance.php'),
+        this.api('ppp.php'),
+        this.api('supervision.php'),
+        this.api('notifications.php'),
+      ]);
+      this.setState({
+        dKpi: kpi, dTrend: trend, dProv: prov, dFields: fields,
+        dReqs: reqs, dEnts: ents, dDups: dups, dFin: fin,
+        dPpp: ppp, dSup: sup, dNotifs: notifs,
+        notifN: notifs.filter(n => !n.is_read).length,
+      });
+    } catch (e) {
+      console.warn('API unavailable, using demo data:', e.message);
+    }
+  }
+
+  approveReq = async (id) => {
+    try {
+      await this.api('requests.php', { method: 'PATCH', body: { id, status: 'อนุมัติแล้ว' } });
+      this.setState({ dReqs: this.state.dReqs.map(r => r.id === id ? { ...r, sta: 'อนุมัติแล้ว' } : r), rSel: null });
+    } catch (e) { this.setState({ rSel: null }); }
+  }
+
+  rejectReq = async (id) => {
+    try {
+      await this.api('requests.php', { method: 'PATCH', body: { id, status: 'ปฏิเสธ' } });
+      this.setState({ dReqs: this.state.dReqs.map(r => r.id === id ? { ...r, sta: 'ปฏิเสธ' } : r), rSel: null });
+    } catch (e) { this.setState({ rSel: null }); }
+  }
+
+  issueLetterReq = async (id) => {
+    try {
+      await this.api('requests.php', { method: 'PATCH', body: { id, status: 'ออกหนังสือแล้ว' } });
+      this.setState({ dReqs: this.state.dReqs.map(r => r.id === id ? { ...r, sta: 'ออกหนังสือแล้ว' } : r) });
+    } catch (e) {}
+  }
+
+  submitForm = async () => {
+    const { fData, name, inst } = this.state;
+    try {
+      const result = await this.api('requests.php', {
+        method: 'POST',
+        body: {
+          student_name: name || 'นายสมชาย ใจดี',
+          college_name: inst || 'วิทยาลัยเทคนิคกรุงเทพ',
+          enterprise_name: fData.entName,
+          type: fData.type.includes('ทวิภาคี') ? 'ฝึกอาชีพ' : 'ฝึกงาน',
+          period_start: fData.start,
+          period_end: fData.end,
+        },
+      });
+      this.setState({ fStep: 5, fLastCode: result.req_code || '' });
+      this.loadData();
+    } catch (e) { this.setState({ fStep: 5, fLastCode: '' }); }
+  }
+
+  mergeGroup = async (groupId) => {
+    try {
+      await this.api('enterprises.php', { method: 'POST', body: { action: 'merge', group_id: groupId } });
+      this.setState({ dDups: this.state.dDups.filter(d => d.id !== groupId), dgOpen: null });
+    } catch (e) { this.setState({ dgOpen: null }); }
+  }
+
+  approveFinance = async (id) => {
+    try {
+      await this.api('finance.php', { method: 'PATCH', body: { id, action: 'approve' } });
+      this.setState({ dFin: this.state.dFin.map(f => f.id === id ? { ...f, pend: false } : f) });
+    } catch (e) {}
+  }
+
+  clearNotifs = async () => {
+    try { await this.api('notifications.php', { method: 'POST', body: { action: 'mark_read' } }); } catch (e) {}
+    this.setState({ notif: false, notifN: 0, dNotifs: this.state.dNotifs.map(n => ({ ...n, is_read: true })) });
+  }
+
+  dk = () => { const{theme,systemDark}=this.state; return theme==='dark'||(theme==='system'&&systemDark); }
+  nt = () => { const t=this.state.theme; this.setState({theme:t==='system'?'light':t==='light'?'dark':'system'}); }
+  ti = () => ({system:'🖥',light:'☀️',dark:'🌙'}[this.state.theme]||'🖥')
+  tl = () => ({system:'ระบบ',light:'สว่าง',dark:'มืด'}[this.state.theme]||'ระบบ')
+
+  c = () => {
+    const d=this.dk();
+    return {
+      d,
+      P:'#7B1D2D', P2:'#9B2A3F', P3:'#5C1621',
+      PP: d?'rgba(123,29,45,0.16)':'#FEF0F2',
+      PB: d?'rgba(123,29,45,0.08)':'#FEF6F7',
+      G:'#C8973A', GP: d?'rgba(200,151,58,0.15)':'#FEF8EC',
+      OK:'#1F7A4A', OKP: d?'rgba(31,122,74,0.15)':'#EDFAF2',
+      WA:'#B87D12', WAP: d?'rgba(184,125,18,0.15)':'#FEF8E8',
+      ER:'#C0392B', ERP: d?'rgba(192,57,43,0.15)':'#FDECEA',
+      IN:'#1565A8', INP: d?'rgba(21,101,168,0.15)':'#EEF4FB',
+      bg: d?'#0F0B0C':'#F2ECEC',
+      sf: d?'#1C1415':'#FFFFFF',
+      s2: d?'#241A1B':'#FAF5F5',
+      br: d?'#382325':'#ECD8DA',
+      b2: d?'#2A1B1D':'#F3E8EA',
+      tx: d?'#EDE5E7':'#1C1012',
+      t2: d?'#9E8688':'#6E5055',
+      t3: d?'#685860':'#9E8688',
+      SB: d?'#130D0E':'#FFFFFF',
+      SBR: d?'#2D1E20':'#F0E4E6',
+    };
+  }
+
+  h = (t,p,...ch) => React.createElement(t,p,...ch)
+
+  logo = (sz=40) => {
+    const H=this.h;
+    const teeth=Array.from({length:12},(_,i)=>H('rect',{key:i,x:19,y:1.5,width:2,height:5,rx:1,fill:'#C8973A',transform:`rotate(${i*30} 20 20)`}));
+    return H('svg',{viewBox:'0 0 40 40',width:sz,height:sz,style:{flexShrink:0}},
+      H('circle',{cx:20,cy:20,r:19,fill:'#7B1D2D',stroke:'#C8973A',strokeWidth:1.2}),
+      ...teeth,
+      H('circle',{cx:20,cy:20,r:12.5,fill:'#7B1D2D'}),
+      H('path',{d:'M20 10C18 13 16 15 17.5 17.5C18.5 19 19.3 19.5 20 19.5C20.7 19.5 21.5 19 22.5 17.5C24 15 22 13 20 10Z',fill:'#F5A623',opacity:.95}),
+      H('rect',{x:19,y:19,width:2,height:5,rx:1,fill:'#C8973A'}),
+      H('path',{d:'M14 27L20 25L26 27L26 33L20 31L14 33Z',fill:'#C8973A',opacity:.8}),
+      H('line',{x1:20,y1:25,x2:20,y2:31,stroke:'#7B1D2D',strokeWidth:.8}),
+    );
+  }
+
+  barChart = (data,{w=400,h=170,clr='#7B1D2D'}={}) => {
+    const H=this.h, c=this.c();
+    const max=Math.max(...data.map(d=>d.v));
+    const step=(w-52)/data.length;
+    const bw=Math.min(step-5,36);
+    return H('svg',{viewBox:`0 0 ${w} ${h}`,style:{width:'100%',height:'auto'}},
+      ...[.25,.5,.75,1].map((t,i)=>H('line',{key:i,x1:38,y1:8+(1-t)*(h-46),x2:w-8,y2:8+(1-t)*(h-46),stroke:c.b2,strokeDasharray:'3 3'})),
+      ...data.map((d,i)=>{
+        const bh=Math.max(3,(d.v/max)*(h-54));
+        const x=40+i*step+(step-bw)/2;
+        const y=h-34-bh;
+        return H('g',{key:i},
+          H('rect',{x,y,width:bw,height:bh,rx:3,fill:clr,opacity:.85,style:{transformOrigin:`${x+bw/2}px ${h-34}px`}}),
+          H('text',{x:x+bw/2,y:h-13,textAnchor:'middle',fontSize:8,fill:c.t3,fontFamily:'Sarabun'},d.label),
+          bh>16&&H('text',{x:x+bw/2,y:y+11,textAnchor:'middle',fontSize:7,fill:'rgba(255,255,255,.9)',fontWeight:700},d.short||''),
+        );
+      }),
+      H('line',{x1:38,y1:8,x2:38,y2:h-34,stroke:c.br,strokeWidth:.5}),
+    );
+  }
+
+  lineChart = (data,{w=400,h=130,clr='#7B1D2D'}={}) => {
+    const H=this.h, c=this.c();
+    const max=Math.max(...data.map(d=>d.v))*1.05;
+    const min=Math.min(...data.map(d=>d.v))*.95;
+    const rng=max-min||1;
+    const pts=data.map((d,i)=>({
+      x:28+i*(w-48)/(data.length-1),
+      y:14+(1-(d.v-min)/rng)*(h-42),
+    }));
+    const line=pts.map((p,i)=>`${i?'L':'M'}${p.x},${p.y}`).join(' ');
+    const area=`${line}L${pts[pts.length-1].x},${h-22}L${pts[0].x},${h-22}Z`;
+    return H('svg',{viewBox:`0 0 ${w} ${h}`,style:{width:'100%',height:'auto'}},
+      H('path',{d:area,fill:clr,opacity:.08}),
+      H('path',{d:line,stroke:clr,strokeWidth:2.5,fill:'none',strokeLinejoin:'round',strokeLinecap:'round'}),
+      ...pts.map((p,i)=>H('circle',{key:i,cx:p.x,cy:p.y,r:4,fill:clr,stroke:'white',strokeWidth:2})),
+      ...data.map((d,i)=>H('text',{key:`l${i}`,x:pts[i].x,y:h-6,textAnchor:'middle',fontSize:9,fill:c.t3,fontFamily:'Sarabun'},d.y)),
+      ...data.map((d,i)=>H('text',{key:`v${i}`,x:pts[i].x,y:pts[i].y-8,textAnchor:'middle',fontSize:8,fill:c.tx,fontWeight:700},d.vl||'')),
+    );
+  }
+
+  donut = (data,{sz=110,th=20}={}) => {
+    const H=this.h, c=this.c();
+    const tot=data.reduce((a,b)=>a+b.v,0);
+    const cx=sz/2, cy=sz/2, r=sz/2-th/2-3;
+    let st=-Math.PI/2;
+    return H('svg',{viewBox:`0 0 ${sz} ${sz}`,width:sz,height:sz,style:{flexShrink:0}},
+      H('circle',{cx,cy,r,fill:'none',stroke:c.PP,strokeWidth:th}),
+      ...data.map((d,i)=>{
+        const ang=(d.v/tot)*2*Math.PI;
+        const x1=cx+r*Math.cos(st), y1=cy+r*Math.sin(st);
+        const x2=cx+r*Math.cos(st+ang), y2=cy+r*Math.sin(st+ang);
+        const la=ang>Math.PI?1:0;
+        st+=ang;
+        return H('path',{key:i,d:`M${x1},${y1}A${r},${r}0 ${la}1 ${x2},${y2}`,stroke:d.color,strokeWidth:th,fill:'none'});
+      }),
+    );
+  }
+
+  btn = (lbl,fn,{v='pri',sm,dis,icon}={}) => {
+    const H=this.h, c=this.c();
+    const S={
+      pri:{background:c.P,color:'#fff',border:'none'},
+      sec:{background:'transparent',color:c.P,border:`1.5px solid ${c.P}`},
+      gh:{background:'transparent',color:c.t2,border:`1.5px solid ${c.br}`},
+      ok:{background:c.OK,color:'#fff',border:'none'},
+      er:{background:c.ER,color:'#fff',border:'none'},
+      go:{background:c.G,color:'#fff',border:'none'},
+      in:{background:c.IN,color:'#fff',border:'none'},
+    };
+    return H('button',{onClick:fn,disabled:dis,style:{
+      ...(S[v]||S.pri),padding:sm?'5px 12px':'8px 18px',
+      borderRadius:7,fontSize:sm?12:13,fontFamily:"'Sarabun',sans-serif",fontWeight:600,
+      cursor:dis?'not-allowed':'pointer',opacity:dis?.5:1,
+      display:'inline-flex',alignItems:'center',gap:5,whiteSpace:'nowrap',transition:'opacity .15s',
+    }},icon&&H('span',null,icon),lbl);
+  }
+
+  bdg = (lbl,col='pri') => {
+    const H=this.h, c=this.c();
+    const m={pri:[c.P,c.PP],ok:[c.OK,c.OKP],wa:[c.WA,c.WAP],er:[c.ER,c.ERP],in:[c.IN,c.INP],go:[c.G,c.GP]};
+    const[fg,bg]=m[col]||m.pri;
+    return H('span',{style:{display:'inline-flex',alignItems:'center',padding:'2px 9px',borderRadius:20,fontSize:11,fontWeight:700,background:bg,color:fg,whiteSpace:'nowrap'}},lbl);
+  }
+
+  sbdg = s => {
+    const m={'รออนุมัติ':'wa','อนุมัติแล้ว':'ok','ปฏิเสธ':'er','ออกหนังสือแล้ว':'in',
+      'อยู่ระหว่างฝึก':'in','เสร็จสิ้น':'ok','ปกติ':'ok','ต้องติดตาม':'wa',
+      'ขาดการติดต่อ':'er','ดำเนินการแล้ว':'ok','กำลังดำเนินการ':'wa'};
+    return this.bdg(s,m[s]||'pri');
+  }
+
+  fmt = n => Number(n).toLocaleString('th-TH')
+
+  data = () => ({
+    kpi:    this.state.dKpi,
+    trend:  this.state.dTrend,
+    prov:   this.state.dProv,
+    fields: this.state.dFields,
+    reqs:   this.state.dReqs,
+    ents:   this.state.dEnts,
+    dups:   this.state.dDups,
+    fin:    this.state.dFin,
+    ppp:    this.state.dPpp,
+    sup:    this.state.dSup,
+  });
+
+  /* ─── PUBLIC PAGE ──────────────────────────────────────────────────── */
+  renderPublic = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const regions=[
+      {name:'กรุงเทพฯ และปริมณฑล',v:12450,color:c.P},
+      {name:'ภาคตะวันออกเฉียงเหนือ',v:8765,color:'#C8973A'},
+      {name:'ภาคกลาง',v:7821,color:'#1565A8'},
+      {name:'ภาคตะวันออก (EEC)',v:6234,color:'#2E7D52'},
+      {name:'ภาคเหนือ',v:4321,color:'#B87D12'},
+      {name:'ภาคใต้',v:2596,color:'#7B4DA8'},
+    ];
+    return H('div',{style:{minHeight:'100vh',background:c.bg,color:c.tx,fontFamily:"'Sarabun',sans-serif"}},
+      H('nav',{style:{background:c.sf,borderBottom:`1px solid ${c.br}`,padding:'0 28px',height:60,display:'flex',alignItems:'center',gap:16,position:'sticky',top:0,zIndex:100,boxShadow:'0 1px 10px rgba(0,0,0,.07)'}},
+        H('div',{style:{display:'flex',alignItems:'center',gap:10,flex:1}},
+          this.logo(34),
+          H('div',null,
+            H('div',{style:{fontSize:14,fontWeight:800,color:c.P,lineHeight:1.1}},'DVE System'),
+            H('div',{style:{fontSize:9,color:c.t3,lineHeight:1.2}},'ระบบทวิภาคี สอศ.'),
+          ),
+        ),
+        H('div',{style:{display:'flex',alignItems:'center',gap:10}},
+          H('button',{onClick:this.nt,title:'สลับธีม',style:{background:c.s2,border:`1px solid ${c.br}`,borderRadius:7,padding:'6px 10px',cursor:'pointer',fontSize:13,color:c.tx}},this.ti()+' '+this.tl()),
+          H('button',{onClick:()=>this.setState({page:'login'}),style:{background:c.P,color:'#fff',border:'none',padding:'8px 20px',borderRadius:7,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Sarabun',sans-serif"}}, '🔐 เข้าสู่ระบบ'),
+        ),
+      ),
+      H('div',{style:{background:`linear-gradient(135deg, ${c.P} 0%, #3A0C18 100%)`,padding:'56px 28px 44px',position:'relative',overflow:'hidden'}},
+        H('div',{style:{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px)',backgroundSize:'28px 28px'}}),
+        H('div',{style:{maxWidth:1200,margin:'0 auto',position:'relative'}},
+          H('div',{style:{textAlign:'center',marginBottom:36}},
+            H('div',{style:{display:'inline-flex',alignItems:'center',gap:12,background:'rgba(255,255,255,.1)',padding:'7px 18px 7px 8px',borderRadius:40,marginBottom:14,border:'1px solid rgba(255,255,255,.15)'}},
+              this.logo(26),
+              H('span',{style:{color:'rgba(255,255,255,.9)',fontSize:12,fontWeight:600}},'สำนักงานคณะกรรมการการอาชีวศึกษา'),
+            ),
+            H('h1',{style:{fontSize:'clamp(20px,3vw,34px)',fontWeight:900,color:'#fff',margin:'0 0 12px',lineHeight:1.2}},'ระบบจัดการอาชีวศึกษาระบบทวิภาคี'),
+            H('p',{style:{fontSize:14,color:'rgba(255,255,255,.75)',maxWidth:560,margin:'0 auto',lineHeight:1.9}},'ศูนย์กลางบริหารจัดการการฝึกงาน ฝึกอาชีพ PPP นิเทศนักศึกษา และการเงินสนับสนุนอาชีวศึกษาทั่วประเทศ'),
+          ),
+          H('div',{style:{display:'flex',flexWrap:'wrap',gap:14,justifyContent:'center'}},
+            ...[
+              ['🎓',this.fmt(D.kpi.intern),'นักศึกษาฝึกงาน','ปีการศึกษา 2567'],
+              ['🏭',this.fmt(D.kpi.ent),'สถานประกอบการ','ทั่วประเทศ'],
+              ['🏫',this.fmt(D.kpi.col),'สถานศึกษา','ในสังกัด สอศ.'],
+              ['👨‍🏫',this.fmt(D.kpi.sup),'ครูนิเทศก์','ออกนิเทศแล้ว'],
+              ['🤝',String(D.kpi.ppp),'นิคม PPP','ที่ได้รับมอบหมาย'],
+            ].map(([icon,val,lbl,sub],i)=>
+              H('div',{key:i,style:{background:'rgba(255,255,255,.1)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 22px',minWidth:155,textAlign:'center',border:'1px solid rgba(255,255,255,.15)',animation:`fadeUp .5s ease ${i*.08}s`}},
+                H('div',{style:{fontSize:22,marginBottom:4}},icon),
+                H('div',{style:{fontSize:26,fontWeight:900,color:'#fff',letterSpacing:'-.5px',lineHeight:1}},val),
+                H('div',{style:{fontSize:12,color:'rgba(255,255,255,.85)',fontWeight:600,marginTop:4}},lbl),
+                H('div',{style:{fontSize:10,color:'rgba(255,255,255,.5)',marginTop:2}},sub),
+              )
+            ),
+          ),
+        ),
+      ),
+      H('div',{style:{maxWidth:1200,margin:'0 auto',padding:'36px 28px',display:'flex',flexDirection:'column',gap:24}},
+        H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1.2fr',gap:20}},
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+            H('div',{style:{marginBottom:14}},
+              H('div',{style:{fontSize:13,fontWeight:700,color:c.tx}},'แนวโน้มนักศึกษาฝึกงาน/ฝึกอาชีพ'),
+              H('div',{style:{fontSize:11,color:c.t2,marginTop:2}},'ปีการศึกษา 2562–2567'),
+            ),
+            this.lineChart(D.trend,{w:360,h:130,clr:c.P}),
+          ),
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+            H('div',{style:{marginBottom:14}},
+              H('div',{style:{fontSize:13,fontWeight:700,color:c.tx}},'10 จังหวัดที่มีนักศึกษาฝึกงานมากที่สุด'),
+              H('div',{style:{fontSize:11,color:c.t2,marginTop:2}},'ปีการศึกษา 2567 (คน)'),
+            ),
+            this.barChart(D.prov,{w:420,h:160,clr:c.P}),
+          ),
+        ),
+        H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1.5fr',gap:20}},
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:16}},'สัดส่วนตามสาขาวิชา'),
+            H('div',{style:{display:'flex',alignItems:'center',gap:20,flexWrap:'wrap'}},
+              this.donut(D.fields,{sz:100,th:18}),
+              H('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+                ...D.fields.map((f,i)=>H('div',{key:i,style:{display:'flex',alignItems:'center',gap:7}},
+                  H('span',{style:{width:10,height:10,borderRadius:2,background:f.color,flexShrink:0}}),
+                  H('span',{style:{fontSize:12,color:c.t2}},f.label),
+                  H('span',{style:{fontSize:11,color:c.tx,fontWeight:700,marginLeft:4}},f.v+'%'),
+                )),
+              ),
+            ),
+          ),
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:16}},'การกระจายตัวตามภูมิภาค'),
+            H('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+              ...regions.map((r,i)=>H('div',{key:i,style:{display:'flex',alignItems:'center',gap:10}},
+                H('div',{style:{width:152,fontSize:11,color:c.t2,flexShrink:0,textAlign:'right'}},r.name),
+                H('div',{style:{flex:1,height:16,background:c.b2,borderRadius:8,overflow:'hidden'}},
+                  H('div',{style:{height:'100%',width:`${(r.v/12450)*100}%`,background:r.color,borderRadius:8,transformOrigin:'left'}}),
+                ),
+                H('div',{style:{width:52,fontSize:12,color:c.tx,fontWeight:700,flexShrink:0}},this.fmt(r.v)),
+              )),
+            ),
+          ),
+        ),
+        H('div',{style:{background:`linear-gradient(135deg, ${c.P} 0%, #5B1425 100%)`,borderRadius:14,padding:'28px 32px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}},
+          H('div',null,
+            H('div',{style:{fontSize:17,fontWeight:800,color:'#fff',marginBottom:5}},'เข้าสู่ระบบเพื่อใช้งานเต็มรูปแบบ'),
+            H('div',{style:{fontSize:12,color:'rgba(255,255,255,.7)'}},'รองรับนักศึกษา บุคลากร ผู้บริหาร และหน่วยงานที่เกี่ยวข้องทั่วประเทศ'),
+          ),
+          H('div',{style:{display:'flex',gap:10}},
+            H('button',{onClick:()=>this.setState({page:'login',lRole:'student'}),style:{background:'#fff',color:c.P,border:'none',padding:'10px 22px',borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Sarabun',sans-serif"}},'🎓 นักศึกษา'),
+            H('button',{onClick:()=>this.setState({page:'login',lRole:'officer'}),style:{background:'rgba(255,255,255,.15)',color:'#fff',border:'1px solid rgba(255,255,255,.3)',padding:'10px 22px',borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Sarabun',sans-serif"}},'🏫 บุคลากร/ผู้บริหาร'),
+          ),
+        ),
+      ),
+      H('footer',{style:{background:c.sf,borderTop:`1px solid ${c.br}`,padding:'18px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10}},
+        H('div',{style:{display:'flex',alignItems:'center',gap:10}},
+          this.logo(26),
+          H('div',null,
+            H('div',{style:{fontSize:11,fontWeight:700,color:c.P}},'DVE System'),
+            H('div',{style:{fontSize:10,color:c.t3}},'© 2568 สำนักงานคณะกรรมการการอาชีวศึกษา'),
+          ),
+        ),
+        H('div',{style:{fontSize:10,color:c.t3}},'ข้อมูล ณ มิถุนายน พ.ศ. 2568 | เวอร์ชัน 1.0.0-beta'),
+      ),
+    );
+  }
+
+  /* ─── LOGIN PAGE ───────────────────────────────────────────────────── */
+  renderLogin = () => {
+    const H=this.h, c=this.c();
+    const{lRole,lInst,lSid,lNid,lUser,lPass,lLoad}=this.state;
+    const roles=[
+      {id:'student',icon:'🎓',label:'นักศึกษา'},
+      {id:'teacher',icon:'👨‍🏫',label:'ครู/บุคลากร'},
+      {id:'officer',icon:'🏫',label:'เจ้าหน้าที่'},
+      {id:'soj',icon:'🏢',label:'สอจ.'},
+      {id:'admin',icon:'⚙️',label:'ศูนย์ทวิภาคี'},
+    ];
+    const doLogin=async()=>{
+      this.setState({lLoad:true});
+      try {
+        const d=await this.api('auth.php',{method:'POST',body:{action:'login',role:lRole,student_code:lSid,national_id:lNid,username:lUser,password:lPass}});
+        this.setState({loggedIn:true,role:d.role,name:d.name,inst:d.institution,lLoad:false,page:'dashboard'});
+        this.loadData();
+      } catch(e) {
+        const names={student:'นายสมชาย ใจดี',teacher:'อ.วิเชียร สุขสันต์',officer:'น.ส.สุภา มานะดี',soj:'ผอ.ประกิต เจริญกิจ',admin:'นายณรงค์ รักษ์ชาติ'};
+        const insts={student:'วิทยาลัยเทคนิคกรุงเทพ',teacher:'วิทยาลัยเทคนิคกรุงเทพ',officer:'วิทยาลัยเทคนิคกรุงเทพ',soj:'สอจ.ชลบุรี',admin:'ศูนย์ทวิภาคี สอศ.'};
+        this.setState({loggedIn:true,role:lRole,name:names[lRole]||'ผู้ใช้งาน',inst:insts[lRole]||'สถานศึกษา',lLoad:false,page:'dashboard'});
+        this.loadData();
+      }
+    };
+    const inp=(lbl,type,val,fn,ph)=>H('div',null,
+      H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:4}},lbl),
+      H('input',{type,value:val,onChange:fn,placeholder:ph,style:{width:'100%',padding:'10px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:13,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+    );
+    return H('div',{style:{minHeight:'100vh',background:c.bg,display:'flex',alignItems:'center',justifyContent:'center',padding:20,fontFamily:"'Sarabun',sans-serif",position:'relative'}},
+      H('div',{style:{position:'absolute',inset:0,backgroundImage:`radial-gradient(circle at 20% 50%, ${c.PP} 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${c.GP} 0%, transparent 50%)`}}),
+      H('button',{onClick:()=>this.setState({page:'public'}),style:{position:'fixed',top:16,left:16,background:c.sf,border:`1px solid ${c.br}`,color:c.t2,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontSize:12,fontFamily:"'Sarabun',sans-serif"}},'← กลับหน้าหลัก'),
+      H('button',{onClick:this.nt,style:{position:'fixed',top:16,right:16,background:c.sf,border:`1px solid ${c.br}`,color:c.tx,padding:'7px 10px',borderRadius:8,cursor:'pointer',fontSize:13}},this.ti()),
+      H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:20,padding:'36px 40px',width:'100%',maxWidth:460,boxShadow:'0 8px 48px rgba(0,0,0,.12)',position:'relative'}},
+        H('div',{style:{textAlign:'center',marginBottom:28}},
+          H('div',{style:{display:'flex',justifyContent:'center',marginBottom:12}},this.logo(52)),
+          H('div',{style:{fontSize:20,fontWeight:900,color:c.P}},'เข้าสู่ระบบ DVE'),
+          H('div',{style:{fontSize:12,color:c.t2,marginTop:3}},'ระบบจัดการอาชีวศึกษาระบบทวิภาคี สอศ.'),
+        ),
+        H('div',{style:{marginBottom:20}},
+          H('div',{style:{fontSize:11,color:c.t2,marginBottom:8,fontWeight:600}},'ประเภทผู้ใช้งาน'),
+          H('div',{style:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6}},
+            ...roles.map(r=>H('button',{key:r.id,onClick:()=>this.setState({lRole:r.id}),style:{padding:'10px 6px',borderRadius:9,cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:11,fontWeight:lRole===r.id?700:400,background:lRole===r.id?c.P:c.s2,color:lRole===r.id?'#fff':c.t2,border:`2px solid ${lRole===r.id?c.P:c.br}`,textAlign:'center',transition:'all .15s'}},
+              H('div',{style:{fontSize:18,marginBottom:3}},r.icon),r.label)),
+          ),
+        ),
+        H('div',{style:{display:'flex',flexDirection:'column',gap:13}},
+          lRole==='student'?H(React.Fragment,null,
+            H('div',null,
+              H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:4}},'ชื่อสถานศึกษา'),
+              H('select',{value:lInst,onChange:e=>this.setState({lInst:e.target.value}),style:{width:'100%',padding:'10px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:lInst?c.tx:c.t3,fontSize:13,fontFamily:"'Sarabun',sans-serif",cursor:'pointer',outline:'none'}},
+                H('option',{value:''},'-- เลือกสถานศึกษา --'),
+                H('option',{value:'VT-BKK'},'วิทยาลัยเทคนิคกรุงเทพ'),
+                H('option',{value:'VP-PN'},'วิทยาลัยพณิชยการพระนคร'),
+                H('option',{value:'VT-CBR'},'วิทยาลัยเทคนิคชลบุรี'),
+                H('option',{value:'VT-CMI'},'วิทยาลัยเทคนิคเชียงใหม่'),
+                H('option',{value:'VT-KKN'},'วิทยาลัยเทคนิคขอนแก่น'),
+              ),
+            ),
+            inp('รหัสนักศึกษา','text',lSid,e=>this.setState({lSid:e.target.value}),'เช่น 6601012345'),
+            inp('เลขประจำตัวประชาชน','password',lNid,e=>this.setState({lNid:e.target.value}),'X-XXXX-XXXXX-XX-X'),
+          ):H(React.Fragment,null,
+            inp('ชื่อผู้ใช้งาน','text',lUser,e=>this.setState({lUser:e.target.value}),'username'),
+            inp('รหัสผ่าน','password',lPass,e=>this.setState({lPass:e.target.value}),'password'),
+          ),
+        ),
+        H('button',{onClick:doLogin,disabled:lLoad,style:{width:'100%',background:lLoad?c.t3:c.P,color:'#fff',border:'none',padding:'12px',borderRadius:10,fontSize:15,fontWeight:700,cursor:lLoad?'default':'pointer',fontFamily:"'Sarabun',sans-serif",marginTop:16,display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'background .2s'}},
+          lLoad&&H('span',{style:{width:16,height:16,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'white',borderRadius:'50%',display:'inline-block',animation:'spin .8s linear infinite'}}),
+          lLoad?'กำลังเข้าสู่ระบบ...':'เข้าสู่ระบบ'),
+        H('div',{style:{textAlign:'center',marginTop:12}},
+          H('button',{onClick:()=>this.setState({loggedIn:true,role:'admin',name:'นายณรงค์ รักษ์ชาติ',inst:'ศูนย์ทวิภาคี สอศ.',page:'dashboard'}),style:{background:'none',border:'none',color:c.t2,fontSize:11,cursor:'pointer',fontFamily:"'Sarabun',sans-serif"}},'ทดลองใช้งานในฐานะ Admin →'),
+        ),
+      ),
+    );
+  }
+
+  /* ─── SIDEBAR ──────────────────────────────────────────────────────── */
+  renderSidebar = () => {
+    const H=this.h, c=this.c();
+    const{page,name,inst,sidebar,notifN}=this.state;
+    const nav=[
+      {id:'dashboard',icon:'🏠',label:'หน้าหลัก'},
+      {id:'requests',icon:'📋',label:'คำร้องฝึกงาน',badge:notifN},
+      {id:'ppp',icon:'🤝',label:'ระบบ PPP'},
+      {id:'supervision',icon:'🗺️',label:'นิเทศนักศึกษา'},
+      {id:'enterprise',icon:'🏭',label:'สถานประกอบการ'},
+      {id:'finance',icon:'💰',label:'การเงิน'},
+      {id:'reports',icon:'📊',label:'รายงาน'},
+    ];
+    if(!sidebar) return H('div',{style:{width:56,background:c.SB,borderRight:`1px solid ${c.SBR}`,display:'flex',flexDirection:'column',alignItems:'center',padding:'14px 0',gap:4,flexShrink:0}},
+      H('div',{onClick:()=>this.setState({sidebar:true}),style:{cursor:'pointer',marginBottom:10}},this.logo(30)),
+      ...nav.map(item=>H('button',{key:item.id,onClick:()=>this.setState({page:item.id}),title:item.label,style:{width:38,height:38,borderRadius:9,border:'none',cursor:'pointer',fontSize:17,background:page===item.id?c.PP:'transparent',color:page===item.id?c.P:c.t2,position:'relative'}},
+        item.icon,
+        item.badge&&H('span',{style:{position:'absolute',top:-2,right:-2,background:c.ER,color:'#fff',borderRadius:9,padding:'0 4px',fontSize:8,fontWeight:700}},item.badge),
+      )),
+    );
+    return H('div',{style:{width:238,background:c.SB,borderRight:`1px solid ${c.SBR}`,display:'flex',flexDirection:'column',flexShrink:0,height:'100vh',position:'sticky',top:0,overflowY:'auto'}},
+      H('div',{style:{padding:'15px',display:'flex',alignItems:'center',gap:12,borderBottom:`1px solid ${c.SBR}`}},
+        H('div',{onClick:()=>this.setState({sidebar:false}),style:{cursor:'pointer'}},this.logo(32)),
+        H('div',null,
+          H('div',{style:{fontSize:13,fontWeight:800,color:c.P,lineHeight:1.1}},'DVE System'),
+          H('div',{style:{fontSize:9,color:c.t3}},'ระบบทวิภาคี สอศ.'),
+        ),
+      ),
+      H('nav',{style:{flex:1,padding:'10px',display:'flex',flexDirection:'column',gap:2}},
+        ...nav.map(item=>{
+          const active=page===item.id;
+          return H('button',{key:item.id,onClick:()=>this.setState({page:item.id,showForm:false,rSel:null}),style:{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,border:'none',background:active?c.PP:'transparent',color:active?c.P:c.t2,fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:active?700:400,cursor:'pointer',textAlign:'left',width:'100%',transition:'background .12s'}},
+            H('span',{style:{fontSize:16,width:22,textAlign:'center'}},item.icon),
+            H('span',{style:{flex:1}},item.label),
+            item.badge&&H('span',{style:{background:c.ER,color:'#fff',borderRadius:10,padding:'1px 6px',fontSize:9,fontWeight:700}},item.badge),
+          );
+        }),
+      ),
+      H('div',{style:{padding:'13px',borderTop:`1px solid ${c.SBR}`}},
+        H('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:10}},
+          H('div',{style:{width:34,height:34,borderRadius:17,background:c.PP,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:c.P}},name?name[0]:'?'),
+          H('div',{style:{flex:1,minWidth:0}},
+            H('div',{style:{fontSize:12,fontWeight:700,color:c.tx,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},name),
+            H('div',{style:{fontSize:9,color:c.t3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},inst),
+          ),
+        ),
+        H('div',{style:{display:'flex',gap:6}},
+          H('button',{onClick:this.nt,title:'สลับธีม',style:{flex:1,background:c.s2,border:`1px solid ${c.br}`,borderRadius:7,padding:'6px 4px',cursor:'pointer',fontSize:11,fontFamily:"'Sarabun',sans-serif",color:c.t2}},this.ti()+' '+this.tl()),
+          H('button',{onClick:()=>this.setState({loggedIn:false,page:'public',role:null,name:'',inst:''}),style:{background:c.ERP,border:'none',borderRadius:7,padding:'6px 8px',cursor:'pointer',fontSize:11,color:c.ER,fontFamily:"'Sarabun',sans-serif",fontWeight:600}},'ออก'),
+        ),
+      ),
+    );
+  }
+
+  /* ─── HEADER ───────────────────────────────────────────────────────── */
+  renderHeader = () => {
+    const H=this.h, c=this.c();
+    const{page,notifN,notif}=this.state;
+    const titles={dashboard:'หน้าหลัก',requests:'คำร้องฝึกงาน / ฝึกอาชีพ',ppp:'ระบบ PPP — Public Private Partnership',supervision:'นิเทศนักศึกษา',enterprise:'บริหารข้อมูลสถานประกอบการ',finance:'ระบบการเงินสนับสนุน',reports:'รายงานและสถิติ'};
+    const notifs=this.state.dNotifs;
+    return H('header',{style:{height:58,background:c.sf,borderBottom:`1px solid ${c.br}`,padding:'0 22px',display:'flex',alignItems:'center',gap:14,flexShrink:0,position:'relative',zIndex:50}},
+      H('div',{style:{flex:1}},
+        H('div',{style:{fontSize:14,fontWeight:800,color:c.tx}},titles[page]||page),
+        H('div',{style:{fontSize:10,color:c.t3}},'สำนักงานคณะกรรมการการอาชีวศึกษา'),
+      ),
+      H('div',{style:{position:'relative'}},
+        H('input',{type:'text',placeholder:'🔍 ค้นหา...',style:{padding:'7px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",width:180,outline:'none'}}),
+      ),
+      H('div',{style:{position:'relative'}},
+        H('button',{onClick:()=>this.setState(s=>({notif:!s.notif})),style:{background:c.s2,border:`1px solid ${c.br}`,borderRadius:8,padding:'7px 9px',cursor:'pointer',fontSize:15,position:'relative'}},
+          '🔔',
+          notifN>0&&H('span',{style:{position:'absolute',top:-4,right:-4,background:c.ER,color:'#fff',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}},notifN),
+        ),
+        notif&&H('div',{style:{position:'absolute',top:44,right:0,width:285,background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,boxShadow:'0 8px 32px rgba(0,0,0,.15)',zIndex:200,overflow:'hidden'}},
+          H('div',{style:{padding:'11px 16px',borderBottom:`1px solid ${c.br}`,display:'flex',justifyContent:'space-between',alignItems:'center'}},
+            H('span',{style:{fontSize:13,fontWeight:700,color:c.tx}},'การแจ้งเตือน'),
+            H('button',{onClick:()=>this.clearNotifs(),style:{background:'none',border:'none',color:c.IN,cursor:'pointer',fontSize:11,fontFamily:"'Sarabun',sans-serif"}},'ล้างทั้งหมด'),
+          ),
+          ...notifs.map((n,i)=>H('div',{key:i,style:{padding:'10px 16px',borderBottom:i<3?`1px solid ${c.b2}`:'none',cursor:'pointer'}},
+            H('div',{style:{fontSize:12,color:c.tx}},n.txt),
+            H('div',{style:{fontSize:10,color:c.t3,marginTop:2}},n.t),
+          )),
+        ),
+      ),
+    );
+  }
+
+  /* ─── DASHBOARD ────────────────────────────────────────────────────── */
+  renderDashboard = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{name,role,inst}=this.state;
+    const kcard=(icon,lbl,val,sub,clr,fn)=>H('div',{onClick:fn,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:'15px 18px',cursor:fn?'pointer':'default',borderLeft:`4px solid ${clr}`}},
+      H('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}},
+        H('span',{style:{fontSize:22}},icon),
+        H('span',{style:{fontSize:22,fontWeight:900,color:clr}},val),
+      ),
+      H('div',{style:{fontSize:13,fontWeight:700,color:c.tx}},lbl),
+      H('div',{style:{fontSize:11,color:c.t3,marginTop:2}},sub),
+    );
+    return H('div',{style:{padding:'22px',display:'flex',flexDirection:'column',gap:20,overflowY:'auto'}},
+      H('div',{style:{background:`linear-gradient(135deg, ${c.P} 0%, #4A0E1A 100%)`,borderRadius:14,padding:'18px 22px',display:'flex',alignItems:'center',gap:16}},
+        H('div',{style:{width:48,height:48,borderRadius:24,background:'rgba(255,255,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}},role==='student'?'🎓':'🏫'),
+        H('div',null,
+          H('div',{style:{fontSize:17,fontWeight:800,color:'#fff'}},'สวัสดี, '+name+' 👋'),
+          H('div',{style:{fontSize:12,color:'rgba(255,255,255,.7)',marginTop:3}},'อาทิตย์ที่ 15 มิถุนายน พ.ศ. 2568 | '+inst),
+        ),
+      ),
+      H('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+        kcard('📋','คำร้องทั้งหมด','245','ปีการศึกษา 2567',c.P,()=>this.setState({page:'requests'})),
+        kcard('⏳','รออนุมัติ','12','ต้องดำเนินการ',c.WA,()=>this.setState({page:'requests',rTab:'pending'})),
+        kcard('✅','อนุมัติแล้ว','218','คำร้อง',c.OK,null),
+        kcard('🗺️','ออกนิเทศแล้ว','187','ครั้ง',c.IN,()=>this.setState({page:'supervision'})),
+      ),
+      H('div',{style:{display:'grid',gridTemplateColumns:'1.6fr 1fr',gap:18}},
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,overflow:'hidden'}},
+          H('div',{style:{padding:'13px 18px',borderBottom:`1px solid ${c.br}`,display:'flex',justifyContent:'space-between',alignItems:'center'}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx}},'คำร้องล่าสุด'),
+            H('button',{onClick:()=>this.setState({page:'requests'}),style:{background:'transparent',border:'none',color:c.P,cursor:'pointer',fontSize:11,fontWeight:600,fontFamily:"'Sarabun',sans-serif"}},'ดูทั้งหมด →'),
+          ),
+          H('div',{style:{padding:'0 18px'}},
+            ...D.reqs.slice(0,5).map((r,i)=>H('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'11px 0',borderBottom:i<4?`1px solid ${c.b2}`:'none'}},
+              H('div',{style:{width:34,height:34,borderRadius:8,background:c.PP,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}},r.type==='ฝึกอาชีพ'?'🎯':'📋'),
+              H('div',{style:{flex:1,minWidth:0}},
+                H('div',{style:{fontSize:12,fontWeight:600,color:c.tx,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.name),
+                H('div',{style:{fontSize:10,color:c.t2}},r.ent+' · '+r.dt),
+              ),
+              this.sbdg(r.sta),
+            )),
+          ),
+        ),
+        H('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'14px 18px'}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:12}},'การดำเนินการด่วน'),
+            H('div',{style:{display:'flex',flexDirection:'column',gap:6}},
+              ...[['🔔','คำร้องรออนุมัติ 12 รายการ',()=>this.setState({page:'requests',rTab:'pending'})],
+                 ['📄','ออกหนังสือส่งตัวที่รออยู่',()=>this.setState({page:'requests'})],
+                 ['🗺️','กำหนดตารางนิเทศ',()=>this.setState({page:'supervision'})],
+                 ['🔀','รวมสถานประกอบการซ้ำ',()=>this.setState({page:'enterprise',entTab:'dedup'})],
+              ].map(([icon,lbl,fn],i)=>H('button',{key:i,onClick:fn,style:{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,border:`1px solid ${c.br}`,background:c.s2,cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:500,color:c.tx,textAlign:'left',width:'100%'}},
+                H('span',{style:{fontSize:15}},icon),lbl,
+              )),
+            ),
+          ),
+          H('div',{style:{background:`${c.G}18`,border:`1px solid ${c.GP}`,borderRadius:14,padding:'14px 18px'}},
+            H('div',{style:{fontSize:12,fontWeight:700,color:c.G,marginBottom:10}},'📅 สรุปวันนี้'),
+            ...[['คำร้องใหม่','4 รายการ'],['นิเทศสำเร็จ','7 ครั้ง'],['หนังสือออก','3 ฉบับ'],['นิคม PPP','1 แห่ง']].map(([k,v],i)=>
+              H('div',{key:i,style:{display:'flex',justifyContent:'space-between',fontSize:12,paddingBottom:i<3?6:0}},
+                H('span',{style:{color:c.t2}},k),H('span',{style:{color:c.tx,fontWeight:700}},v),
+              )
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /* ─── REQUESTS PAGE ────────────────────────────────────────────────── */
+  renderRequests = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{rTab,rSearch,rSel,showForm}=this.state;
+    if(showForm) return this.renderInternForm();
+    const tabs=[['all','ทั้งหมด'],['pending','รออนุมัติ'],['approved','อนุมัติแล้ว'],['rejected','ปฏิเสธ']];
+    const tabMap={all:null,pending:'รออนุมัติ',approved:'อนุมัติแล้ว',rejected:'ปฏิเสธ'};
+    const filtered=D.reqs.filter(r=>{
+      const tabOk=!tabMap[rTab]||r.sta===tabMap[rTab];
+      const srOk=!rSearch||r.name.includes(rSearch)||r.id.includes(rSearch)||r.ent.includes(rSearch);
+      return tabOk&&srOk;
+    });
+    const selReq=rSel?D.reqs.find(r=>r.id===rSel):null;
+    return H('div',{style:{display:'flex',minHeight:'60vh'}},
+      H('div',{style:{flex:1,display:'flex',flexDirection:'column',padding:22,gap:14,borderRight:selReq?`1px solid ${c.br}`:'none'}},
+        H('div',{style:{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}},
+          H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3}},
+            ...tabs.map(([id,lbl])=>H('button',{key:id,onClick:()=>this.setState({rTab:id,rSel:null}),style:{padding:'6px 14px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:rTab===id?700:400,background:rTab===id?c.P:'transparent',color:rTab===id?'#fff':c.t2}},lbl)),
+          ),
+          H('div',{style:{flex:1,minWidth:180,position:'relative'}},
+            H('input',{type:'text',placeholder:'ค้นหาชื่อ รหัส หรือสถานประกอบการ...',value:rSearch,onChange:e=>this.setState({rSearch:e.target.value}),style:{width:'100%',padding:'8px 12px 8px 30px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+            H('span',{style:{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:10,color:c.t3}},'🔍'),
+          ),
+          this.btn('+ ยื่นคำร้องใหม่',()=>this.setState({showForm:true,fStep:0})),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,overflow:'hidden'}},
+          H('div',{style:{display:'grid',gridTemplateColumns:'128px 1fr 1fr 1fr 88px 110px',padding:'9px 14px',borderBottom:`1px solid ${c.br}`,fontSize:10,fontWeight:700,color:c.t2,background:c.s2}},
+            ...[['รหัสคำร้อง'],['ชื่อนักศึกษา'],['สาขาวิชา'],['สถานประกอบการ'],['วันที่'],['สถานะ']].map(([h],i)=>H('div',{key:i},h)),
+          ),
+          ...filtered.map((r,i)=>H('div',{key:i,onClick:()=>this.setState({rSel:r.id}),style:{display:'grid',gridTemplateColumns:'128px 1fr 1fr 1fr 88px 110px',padding:'11px 14px',fontSize:12,color:c.tx,cursor:'pointer',background:rSel===r.id?c.PP:'transparent',borderBottom:i<filtered.length-1?`1px solid ${c.b2}`:'none',transition:'background .1s'}},
+            H('div',{style:{fontWeight:700,color:c.P}},r.id),
+            H('div',null,r.name),
+            H('div',{style:{color:c.t2}},r.dept),
+            H('div',{style:{color:c.t2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.ent),
+            H('div',{style:{color:c.t2}},r.dt),
+            H('div',null,this.sbdg(r.sta)),
+          )),
+          filtered.length===0&&H('div',{style:{padding:'32px',textAlign:'center',color:c.t3,fontSize:13}},'ไม่พบรายการที่ตรงกับการค้นหา'),
+        ),
+      ),
+      selReq&&H('div',{style:{width:335,overflow:'auto',flexShrink:0,padding:22,display:'flex',flexDirection:'column',gap:14}},
+        H('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+          H('div',{style:{fontSize:14,fontWeight:800,color:c.tx}},selReq.id),
+          H('button',{onClick:()=>this.setState({rSel:null}),style:{background:'none',border:'none',cursor:'pointer',fontSize:18,color:c.t2}},'×'),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:16,display:'flex',flexDirection:'column',gap:8}},
+          ...[['ชื่อนักศึกษา',selReq.name],['สถานศึกษา',selReq.col],['สาขาวิชา',selReq.dept],['ประเภท',selReq.type],['สถานประกอบการ',selReq.ent],['ช่วงเวลา',selReq.period],['วันที่ยื่น',selReq.dt]].map(([k,v],i)=>
+            H('div',{key:i,style:{display:'flex',justifyContent:'space-between',fontSize:12,paddingBottom:i<6?8:0,borderBottom:i<6?`1px solid ${c.b2}`:'none'}},
+              H('span',{style:{color:c.t2}},k),H('span',{style:{color:c.tx,fontWeight:600}},v),
+            )
+          ),
+        ),
+        H('div',{style:{display:'flex',alignItems:'center',gap:8}},
+          H('span',{style:{fontSize:12,color:c.t2,fontWeight:600}},'สถานะ:'),this.sbdg(selReq.sta),
+        ),
+        H('div',{style:{display:'flex',gap:8,flexWrap:'wrap'}},
+          selReq.sta==='รออนุมัติ'&&H(React.Fragment,null,
+            this.btn('✓ อนุมัติ',()=>this.approveReq(selReq.id),{v:'ok',sm:true}),
+            this.btn('✗ ปฏิเสธ',()=>this.rejectReq(selReq.id),{v:'er',sm:true}),
+          ),
+          selReq.sta==='อนุมัติแล้ว'&&this.btn('📄 ออกหนังสือ',()=>this.issueLetterReq(selReq.id),{v:'pri',sm:true}),
+          this.btn('🖨 พิมพ์',()=>{},{v:'gh',sm:true}),
+        ),
+      ),
+    );
+  }
+
+  /* ─── INTERN FORM ──────────────────────────────────────────────────── */
+  renderInternForm = () => {
+    const H=this.h, c=this.c();
+    const{fStep,fData}=this.state;
+    const steps=['ข้อมูลส่วนตัว','สถานประกอบการ','ช่วงเวลา','เอกสาร','ยืนยัน'];
+    const ents=['บริษัท ยนตรการ จำกัด (กรุงเทพฯ)','บจก. ไทยซัมซุง อิเลคโทรนิคส์ (สมุทรปราการ)','บมจ. โตโยต้า มอเตอร์ ประเทศไทย','HANA Semiconductor (Thailand)','บมจ. SCG Chemicals (ระยอง)'];
+    if(fStep>=5) return H('div',{style:{padding:40,textAlign:'center'}},
+      H('div',{style:{fontSize:52,marginBottom:16}},'✅'),
+      H('div',{style:{fontSize:20,fontWeight:800,color:c.OK,marginBottom:8}},'ส่งคำร้องสำเร็จ!'),
+      H('div',{style:{fontSize:13,color:c.t2,marginBottom:6}},'หมายเลขคำร้อง: '+(this.state.fLastCode||'REQ2568-'+String(Date.now()).slice(-4))),
+      H('div',{style:{fontSize:12,color:c.t3,marginBottom:24}},'สถานะ: รออนุมัติจากครูที่ปรึกษา'),
+      this.btn('← กลับหน้าคำร้อง',()=>this.setState({showForm:false,fStep:0})),
+    );
+    return H('div',{style:{padding:24,maxWidth:660,margin:'0 auto'}},
+      H('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:22}},
+        H('button',{onClick:()=>this.setState({showForm:false}),style:{background:'transparent',border:`1px solid ${c.br}`,color:c.t2,padding:'7px 14px',borderRadius:7,cursor:'pointer',fontSize:12,fontFamily:"'Sarabun',sans-serif"}},'← กลับ'),
+        H('div',{style:{fontSize:15,fontWeight:800,color:c.tx}},'ยื่นคำร้องฝึกงาน / ฝึกอาชีพ'),
+      ),
+      H('div',{style:{display:'flex',alignItems:'flex-start',gap:0,marginBottom:24}},
+        ...steps.map((s,i)=>H(React.Fragment,{key:i},
+          H('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:4,flexShrink:0}},
+            H('div',{style:{width:26,height:26,borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,background:i<fStep?c.OK:i===fStep?c.P:c.b2,color:i<=fStep?'#fff':c.t3,border:`2px solid ${i<fStep?c.OK:i===fStep?c.P:c.br}`}},i<fStep?'✓':i+1),
+            H('div',{style:{fontSize:9,color:i===fStep?c.P:c.t3,fontWeight:i===fStep?700:400,textAlign:'center',maxWidth:56,lineHeight:1.2,marginTop:2}},s),
+          ),
+          i<steps.length-1&&H('div',{style:{flex:1,height:2,background:i<fStep?c.OK:c.b2,marginTop:13,minWidth:16}}),
+        )),
+      ),
+      H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:22,display:'flex',flexDirection:'column',gap:14}},
+        fStep===0&&H(React.Fragment,null,
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx}},'ตรวจสอบข้อมูลส่วนตัว'),
+          H('div',{style:{background:c.s2,borderRadius:10,padding:16,display:'flex',flexDirection:'column',gap:10}},
+            ...[['ชื่อ-นามสกุล','นายสมชาย ใจดี'],['รหัสนักศึกษา','6601012345'],['สาขาวิชา','ช่างยนต์'],['ระดับชั้น','ปวช. 3'],['สถานศึกษา','วิทยาลัยเทคนิคกรุงเทพ']].map(([k,v],i)=>H('div',{key:i,style:{display:'flex',gap:12,fontSize:13}},H('span',{style:{width:130,color:c.t2,flexShrink:0}},k),H('span',{style:{color:c.tx,fontWeight:600}},v))),
+          ),
+          H('div',null,
+            H('div',{style:{fontSize:12,color:c.t2,fontWeight:600,marginBottom:8}},'ประเภทการฝึก'),
+            H('div',{style:{display:'flex',gap:10}},
+              ...['ฝึกงาน (ระบบปกติ)','ฝึกอาชีพ (ระบบทวิภาคี)'].map((t,i)=>H('button',{key:i,onClick:()=>this.setState({fData:{...fData,type:t}}),style:{flex:1,padding:'10px',borderRadius:8,border:`1.5px solid ${fData.type===t?c.P:c.br}`,background:fData.type===t?c.PP:c.s2,color:fData.type===t?c.P:c.t2,cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:fData.type===t?700:400}},t)),
+            ),
+          ),
+        ),
+        fStep===1&&H(React.Fragment,null,
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx}},'เลือกสถานประกอบการ'),
+          H('input',{type:'text',placeholder:'🔍 ค้นหาสถานประกอบการ...',value:fData.entName,onChange:e=>this.setState({fData:{...fData,entName:e.target.value}}),style:{width:'100%',padding:'10px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+          H('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+            ...ents.map((ent,i)=>H('div',{key:i,onClick:()=>this.setState({fData:{...fData,entName:ent}}),style:{padding:'10px 14px',border:`1.5px solid ${fData.entName===ent?c.P:c.br}`,borderRadius:9,cursor:'pointer',fontSize:12,color:c.tx,background:fData.entName===ent?c.PP:c.s2,display:'flex',alignItems:'center',justifyContent:'space-between'}},
+              H('span',null,ent),
+              fData.entName===ent&&H('span',{style:{color:c.OK,fontSize:14}},'✓'),
+            )),
+          ),
+        ),
+        fStep===2&&H(React.Fragment,null,
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx}},'ช่วงเวลาการฝึก'),
+          H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+            ...([['วันที่เริ่มต้น','start'],['วันที่สิ้นสุด','end']]).map(([lbl,key],i)=>H('div',{key:i},
+              H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:4}},lbl),
+              H('input',{type:'date',value:fData[key],onChange:e=>this.setState({fData:{...fData,[key]:e.target.value}}),style:{width:'100%',padding:'9px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:13,outline:'none',boxSizing:'border-box',fontFamily:"'Sarabun',sans-serif"}}),
+            )),
+          ),
+        ),
+        fStep===3&&H(React.Fragment,null,
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx}},'แนบเอกสารประกอบ'),
+          H('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+            ...['บัตรประจำตัวประชาชน (PDF/JPG)','ทะเบียนบ้าน (PDF/JPG)','ใบรับรองนักศึกษา (PDF)'].map((doc,i)=>H('div',{key:i,style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 14px',border:`1.5px solid ${c.br}`,borderRadius:9,background:c.s2}},
+              H('span',{style:{fontSize:12,color:c.tx}},doc),
+              H('span',{style:{background:c.P,color:'#fff',padding:'5px 12px',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer'}},'+ แนบไฟล์'),
+            )),
+          ),
+        ),
+        fStep===4&&H(React.Fragment,null,
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx}},'ยืนยันและส่งคำร้อง'),
+          H('div',{style:{background:c.s2,borderRadius:10,padding:16,display:'flex',flexDirection:'column',gap:8}},
+            ...[['ชื่อ','นายสมชาย ใจดี'],['ประเภท',fData.type],['สถานประกอบการ',fData.entName||'(ยังไม่ได้เลือก)'],['ระยะเวลา',fData.start+' ถึง '+fData.end]].map(([k,v],i)=>H('div',{key:i,style:{display:'flex',justifyContent:'space-between',fontSize:12}},H('span',{style:{color:c.t2}},k),H('span',{style:{color:c.tx,fontWeight:700}},v))),
+          ),
+          H('div',{style:{background:c.WAP,border:`1px solid ${c.WA}44`,borderRadius:8,padding:'10px 12px',fontSize:11,color:c.WA,marginTop:4}},'⚠️ เมื่อส่งแล้วไม่สามารถแก้ไขได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนส่ง'),
+        ),
+      ),
+      H('div',{style:{display:'flex',justifyContent:'space-between',marginTop:14}},
+        fStep>0?this.btn('← ย้อนกลับ',()=>this.setState({fStep:fStep-1}),{v:'gh'}):H('div',null),
+        fStep<4?this.btn('ถัดไป →',()=>this.setState({fStep:fStep+1})):this.btn('✓ ส่งคำร้อง',()=>this.submitForm(),{v:'ok'}),
+      ),
+    );
+  }
+
+  /* ─── PPP PAGE ─────────────────────────────────────────────────────── */
+  renderPPP = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{pppTab}=this.state;
+    const tabs=[['estates','นิคมอุตสาหกรรม'],['demand','ความต้องการ HR'],['analysis','วิเคราะห์']];
+    return H('div',{style:{padding:22,display:'flex',flexDirection:'column',gap:20,overflowY:'auto'}},
+      H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3,alignSelf:'flex-start'}},
+        ...tabs.map(([id,lbl])=>H('button',{key:id,onClick:()=>this.setState({pppTab:id}),style:{padding:'7px 16px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:pppTab===id?700:400,background:pppTab===id?c.P:'transparent',color:pppTab===id?'#fff':c.t2}},lbl)),
+      ),
+      pppTab==='estates'&&H(React.Fragment,null,
+        H('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+          ...[['🏭','45','นิคมอุตสาหกรรม PPP','ทั่วประเทศ',c.P],['🤝','28','สอจ. รับผิดชอบ','จาก 77 จังหวัด',c.G],['📊','1,210','ความต้องการ HR','รวมทุกนิคม (คน)',c.IN]].map(([icon,v,l,s,clr],i)=>H('div',{key:i,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:'16px 18px',borderLeft:`4px solid ${clr}`}},
+            H('div',{style:{fontSize:22,marginBottom:8}},icon),
+            H('div',{style:{fontSize:24,fontWeight:900,color:clr}},v),
+            H('div',{style:{fontSize:12,fontWeight:700,color:c.tx}},l),
+            H('div',{style:{fontSize:10,color:c.t3,marginTop:2}},s),
+          )),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,overflow:'hidden'}},
+          H('div',{style:{padding:'14px 18px',borderBottom:`1px solid ${c.br}`,fontSize:13,fontWeight:700,color:c.tx}},'รายการนิคมอุตสาหกรรมที่ได้รับมอบหมาย'),
+          H('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12}},
+            H('thead',null,H('tr',{style:{background:c.s2}},
+              ...['ชื่อนิคมอุตสาหกรรม','จังหวัด','สอจ.รับผิดชอบ','บริษัทในนิคม','ต้องการ HR','บันทึกแล้ว','สถานะ'].map((h,i)=>H('th',{key:i,style:{padding:'10px 14px',textAlign:'left',fontWeight:700,color:c.t2,borderBottom:`1px solid ${c.br}`,fontSize:11,whiteSpace:'nowrap'}},h)),
+            )),
+            H('tbody',null,...D.ppp.map((p,i)=>H('tr',{key:i,style:{borderBottom:`1px solid ${c.b2}`}},
+              H('td',{style:{padding:'11px 14px',color:c.P,fontWeight:600}},p.name),
+              H('td',{style:{padding:'11px 14px',color:c.t2}},p.prov),
+              H('td',{style:{padding:'11px 14px',color:c.tx}},p.soj),
+              H('td',{style:{padding:'11px 14px',textAlign:'center',color:c.tx}},p.co),
+              H('td',{style:{padding:'11px 14px',textAlign:'center',color:c.tx}},p.dem),
+              H('td',{style:{padding:'11px 14px',textAlign:'center'}},H('span',{style:{fontWeight:700,color:p.fill/p.dem>=.8?c.OK:c.WA}},p.fill+'/'+p.dem)),
+              H('td',{style:{padding:'11px 14px'}},this.sbdg(p.sta)),
+            ))),
+          ),
+        ),
+      ),
+      pppTab==='demand'&&H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}},
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:22}},
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:16}},'กรอกข้อมูลความต้องการ HR'),
+          H('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+            ...[['นิคมอุตสาหกรรม','sel'],['สาขาวิชาที่ต้องการ','sel'],['จำนวนที่ต้องการ (คน)','num'],['ปีที่ต้องการ (พ.ศ.)','num'],['คุณสมบัติพิเศษ','ta']].map(([lbl,type],i)=>H('div',{key:i},
+              H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:4}},lbl),
+              type==='ta'?H('textarea',{rows:3,style:{width:'100%',padding:'8px 10px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',resize:'vertical',boxSizing:'border-box'}}):
+              type==='sel'?H('select',{style:{width:'100%',padding:'9px 10px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.t3,fontSize:12,fontFamily:"'Sarabun',sans-serif",cursor:'pointer',outline:'none'}},H('option',null,'-- เลือก --')):
+              H('input',{type:'number',style:{width:'100%',padding:'9px 10px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+            )),
+            this.btn('💾 บันทึกข้อมูล',()=>{}),
+          ),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:22}},
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:16}},'สรุปความต้องการรายสาขา'),
+          H('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+            ...[['ช่างอุตสาหกรรม',456,380,c.P],['ไฟฟ้า-อิเล็กทรอนิกส์',312,210,c.IN],['เทคโนโลยีสารสนเทศ',198,145,c.G],['เคมีภัณฑ์',144,98,c.OK],['โลหะการ',100,67,c.WA]].map(([name,total,filled,color],i)=>H('div',{key:i},
+              H('div',{style:{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}},H('span',{style:{color:c.tx}},name),H('span',{style:{color:c.t2}},filled+'/'+total+' คน')),
+              H('div',{style:{height:8,background:c.b2,borderRadius:4,overflow:'hidden'}},H('div',{style:{height:'100%',width:`${(filled/total)*100}%`,background:color,borderRadius:4}})),
+            )),
+          ),
+        ),
+      ),
+      pppTab==='analysis'&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:24}},
+        H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:20}},'วิเคราะห์ความต้องการกำลังคนรายพื้นที่'),
+        this.barChart([{v:245,label:'ชลบุรี',short:'245'},{v:312,label:'ระยอง',short:'312'},{v:134,label:'ขอนแก่น',short:'134'},{v:98,label:'เชียงใหม่',short:'98'},{v:421,label:'สมุทรปราการ',short:'421'}],{w:560,h:200,clr:c.P}),
+        H('div',{style:{marginTop:14,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}},
+          ...[['ความต้องการรวม','1,210 คน',c.P],['บรรจุแล้ว','836 คน (69%)',c.OK],['ขาดอยู่','374 คน',c.WA]].map(([k,v,clr],i)=>H('div',{key:i,style:{background:c.s2,borderRadius:10,padding:'12px 16px',borderLeft:`3px solid ${clr}`}},H('div',{style:{fontSize:11,color:c.t2}},k),H('div',{style:{fontSize:18,fontWeight:800,color:clr,marginTop:4}},v))),
+        ),
+      ),
+    );
+  }
+
+  /* ─── SUPERVISION PAGE ─────────────────────────────────────────────── */
+  renderSupervision = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{supTab}=this.state;
+    const tabs=[['list','รายการนักศึกษา'],['schedule','ตารางนิเทศ'],['record','บันทึกนิเทศ']];
+    return H('div',{style:{padding:22,display:'flex',flexDirection:'column',gap:20,overflowY:'auto'}},
+      H('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}},
+        H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3}},
+          ...tabs.map(([id,lbl])=>H('button',{key:id,onClick:()=>this.setState({supTab:id}),style:{padding:'7px 16px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:supTab===id?700:400,background:supTab===id?c.P:'transparent',color:supTab===id?'#fff':c.t2}},lbl)),
+        ),
+        this.btn('+ มอบหมายครูนิเทศก์',()=>{}),
+      ),
+      supTab==='list'&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,overflow:'hidden'}},
+        H('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12}},
+          H('thead',null,H('tr',{style:{background:c.s2}},
+            ...['นักศึกษา','สถานศึกษา','สถานประกอบการ','ครูนิเทศก์','นิเทศครั้งถัดไป','จำนวนนิเทศ','สถานะ'].map((h,i)=>H('th',{key:i,style:{padding:'10px 14px',textAlign:'left',fontWeight:700,color:c.t2,borderBottom:`1px solid ${c.br}`,fontSize:11,whiteSpace:'nowrap'}},h)),
+          )),
+          H('tbody',null,...D.sup.map((s,i)=>H('tr',{key:i,style:{borderBottom:`1px solid ${c.b2}`}},
+            H('td',{style:{padding:'11px 14px',fontWeight:600,color:c.tx}},s.st),
+            H('td',{style:{padding:'11px 14px',color:c.t2}},s.col),
+            H('td',{style:{padding:'11px 14px',color:c.t2,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},s.ent),
+            H('td',{style:{padding:'11px 14px',color:c.tx}},s.sv),
+            H('td',{style:{padding:'11px 14px',color:c.t2}},s.nv),
+            H('td',{style:{padding:'11px 14px',textAlign:'center',color:c.tx}},s.vis),
+            H('td',{style:{padding:'11px 14px'}},this.sbdg(s.sta)),
+          ))),
+        ),
+      ),
+      supTab==='schedule'&&H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}},
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:22}},
+          H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:16}},'ตารางนิเทศ มิถุนายน 2568'),
+          H('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4}},
+            ...['อา','จ','อ','พ','พฤ','ศ','ส'].map((d,i)=>H('div',{key:i,style:{textAlign:'center',fontSize:10,fontWeight:700,color:c.t2,padding:'4px 0'}},d)),
+            ...[null,null,null,null,null,null,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30].map((d,i)=>{
+              const isVisit=[18,19,20,22,25].includes(d);
+              const isToday=d===15;
+              return H('div',{key:i,style:{textAlign:'center',padding:'6px 2px',borderRadius:6,fontSize:11,fontWeight:d?500:400,background:isToday?c.P:isVisit?c.PP:'transparent',color:isToday?'#fff':isVisit?c.P:d?c.tx:'transparent',cursor:d?'pointer':'default'}},d||'');
+            }),
+          ),
+          H('div',{style:{marginTop:14,display:'flex',gap:14,fontSize:11}},
+            H('div',{style:{display:'flex',alignItems:'center',gap:5}},H('span',{style:{width:10,height:10,borderRadius:3,background:c.P,display:'inline-block'}}),'วันนี้'),
+            H('div',{style:{display:'flex',alignItems:'center',gap:5}},H('span',{style:{width:10,height:10,borderRadius:3,background:c.PP,display:'inline-block'}}),'มีนิเทศ'),
+          ),
+        ),
+        H('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:18}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:12}},'นิเทศที่กำลังจะถึง'),
+            H('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+              ...D.sup.slice(0,4).map((s,i)=>H('div',{key:i,style:{display:'flex',alignItems:'center',gap:10,padding:'9px 10px',background:c.s2,borderRadius:8}},
+                H('div',{style:{width:32,height:32,borderRadius:16,background:c.PP,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}},'👨‍🏫'),
+                H('div',{style:{flex:1,minWidth:0}},
+                  H('div',{style:{fontSize:12,fontWeight:600,color:c.tx,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},s.st),
+                  H('div',{style:{fontSize:10,color:c.t2}},s.sv+' · '+s.nv),
+                ),
+                this.sbdg(s.sta),
+              )),
+            ),
+          ),
+        ),
+      ),
+      supTab==='record'&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:24}},
+        H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:18}},'บันทึกผลการนิเทศ'),
+        H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
+          ...([['นักศึกษา','sel'],['สถานประกอบการ','txt'],['วันที่นิเทศ','date'],['ครั้งที่นิเทศ','num']]).map(([lbl,type],i)=>H('div',{key:i},
+            H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:4}},lbl),
+            type==='sel'?H('select',{style:{width:'100%',padding:'9px 10px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none'}},
+              ...D.sup.map((s,j)=>H('option',{key:j},s.st))):
+            H('input',{type:type==='date'?'date':type==='num'?'number':'text',style:{width:'100%',padding:'9px 10px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+          )),
+        ),
+        H('div',{style:{marginTop:12}},
+          H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:4}},'ผลการนิเทศและข้อสังเกต'),
+          H('textarea',{rows:4,style:{width:'100%',padding:'9px 10px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',resize:'vertical',boxSizing:'border-box'}}),
+        ),
+        H('div',{style:{marginTop:12}},
+          H('label',{style:{fontSize:12,color:c.t2,fontWeight:600,display:'block',marginBottom:8}},'สถานะนักศึกษา'),
+          H('div',{style:{display:'flex',gap:10}},
+            ...['ปกติ','ต้องติดตาม','ขาดการติดต่อ'].map((sta,i)=>H('button',{key:i,style:{flex:1,padding:'9px',borderRadius:8,border:`1.5px solid ${[c.OK,c.WA,c.ER][i]}`,background:[c.OKP,c.WAP,c.ERP][i],color:[c.OK,c.WA,c.ER][i],cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:600}},sta)),
+          ),
+        ),
+        H('div',{style:{marginTop:16}},this.btn('💾 บันทึกผลนิเทศ',()=>{})),
+      ),
+    );
+  }
+
+  /* ─── ENTERPRISE PAGE ──────────────────────────────────────────────── */
+  renderEnterprise = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{entSearch,entTab,dgOpen}=this.state;
+    const tabs=[['list','รายการสถานประกอบการ'],['dedup','ตรวจสอบข้อมูลซ้ำ']];
+    const filtered=D.ents.filter(e=>!entSearch||e.name.toLowerCase().includes(entSearch.toLowerCase())||e.type.includes(entSearch)||e.prov.includes(entSearch));
+    return H('div',{style:{padding:22,display:'flex',flexDirection:'column',gap:20,overflowY:'auto'}},
+      H('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}},
+        H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3}},
+          ...tabs.map(([id,lbl])=>H('button',{key:id,onClick:()=>this.setState({entTab:id}),style:{padding:'7px 16px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:entTab===id?700:400,background:entTab===id?c.P:'transparent',color:entTab===id?'#fff':c.t2}},lbl)),
+        ),
+        H('input',{type:'text',placeholder:'🔍 ค้นหาสถานประกอบการ...',value:entSearch,onChange:e=>this.setState({entSearch:e.target.value}),style:{padding:'8px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',width:240}}),
+      ),
+      entTab==='list'&&H('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+        ...filtered.map((e,i)=>H('div',{key:i,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',gap:16}},
+          H('div',{style:{width:44,height:44,borderRadius:10,background:c.PP,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'🏭'),
+          H('div',{style:{flex:1,minWidth:0}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx}},e.name),
+            H('div',{style:{fontSize:11,color:c.t2,marginTop:3}},e.type+' | '+e.prov),
+            H('div',{style:{fontSize:10,color:c.t3,marginTop:3}},'ชื่อทางเลือก: '+e.al.join(', ')),
+          ),
+          H('div',{style:{textAlign:'right',flexShrink:0}},
+            H('div',{style:{fontSize:20,fontWeight:900,color:c.P}},e.cnt),
+            H('div',{style:{fontSize:10,color:c.t3}},'นักศึกษา'),
+          ),
+          this.btn('ดูรายละเอียด',()=>{},{v:'gh',sm:true}),
+        )),
+        filtered.length===0&&H('div',{style:{textAlign:'center',padding:32,color:c.t3,fontSize:13}},'ไม่พบสถานประกอบการที่ตรงกับการค้นหา'),
+      ),
+      entTab==='dedup'&&H('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+        H('div',{style:{background:c.WAP,border:`1px solid ${c.WA}44`,borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',gap:12}},
+          H('span',{style:{fontSize:20}},'⚠️'),
+          H('div',null,
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.WA}},'พบรายการที่อาจซ้ำกัน '+D.dups.length+' กลุ่ม'),
+            H('div',{style:{fontSize:11,color:c.t2,marginTop:2}},'ระบบตรวจพบสถานประกอบการที่มีชื่อคล้ายกัน โปรดตรวจสอบและรวมข้อมูล'),
+          ),
+        ),
+        ...D.dups.map((dg,gi)=>H('div',{key:gi,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,overflow:'hidden'}},
+          H('div',{onClick:()=>this.setState({dgOpen:dgOpen===dg.id?null:dg.id}),style:{padding:'14px 18px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:dgOpen===dg.id?`1px solid ${c.br}`:'none'}},
+            H('div',{style:{width:28,height:28,borderRadius:6,background:c.WAP,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}},'🔀'),
+            H('div',{style:{flex:1}},
+              H('div',{style:{fontSize:13,fontWeight:700,color:c.tx}},'กลุ่มที่ '+(gi+1)+': '+dg.can),
+              H('div',{style:{fontSize:11,color:c.t2,marginTop:2}},dg.ent.length+' รายการที่คล้ายกัน'),
+            ),
+            H('span',{style:{fontSize:16,color:c.t2}},dgOpen===dg.id?'▲':'▼'),
+          ),
+          dgOpen===dg.id&&H('div',{style:{padding:'16px 18px',display:'flex',flexDirection:'column',gap:10}},
+            H('div',{style:{fontSize:12,fontWeight:700,color:c.t2,marginBottom:4}},'เลือกชื่อหลัก (Canonical Name):'),
+            ...dg.ent.map((e,ei)=>H('div',{key:ei,style:{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',border:`1.5px solid ${ei===0?c.P:c.br}`,borderRadius:9,background:ei===0?c.PP:c.s2,cursor:'pointer'}},
+              H('input',{type:'radio',name:'can-'+dg.id,defaultChecked:ei===0,style:{cursor:'pointer',accentColor:c.P}}),
+              H('div',{style:{flex:1}},
+                H('div',{style:{fontSize:12,fontWeight:700,color:c.tx}},e.n),
+                H('div',{style:{fontSize:10,color:c.t2}},'ใช้งาน '+e.cnt+' ครั้ง'),
+              ),
+              H('div',{style:{display:'flex',alignItems:'center',gap:6}},
+                H('div',{style:{width:50,height:6,background:c.b2,borderRadius:3,overflow:'hidden'}},H('div',{style:{height:'100%',width:e.score+'%',background:e.score===100?c.OK:e.score>=80?c.G:c.WA,borderRadius:3}})),
+                H('span',{style:{fontSize:10,fontWeight:700,color:e.score===100?c.OK:c.G}},e.score+'%'),
+              ),
+            )),
+            H('div',{style:{marginTop:6,display:'flex',gap:10}},
+              this.btn('🔀 รวมเป็นสถานประกอบการเดียวกัน',()=>this.mergeGroup(dg.id),{v:'go'}),
+              this.btn('ยกเลิก',()=>this.setState({dgOpen:null}),{v:'gh',sm:true}),
+            ),
+          ),
+        )),
+      ),
+    );
+  }
+
+  /* ─── FINANCE PAGE ─────────────────────────────────────────────────── */
+  renderFinance = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{finTab}=this.state;
+    const tabs=[['overview','ภาพรวม'],['allocate','เกณฑ์จัดสรร'],['history','ประวัติ']];
+    const zoneColors={ทั่วไป:c.IN,EEC:c.OK,ชายแดนใต้:c.WA};
+    const total=D.fin.reduce((a,b)=>a+b.alloc,0);
+    return H('div',{style:{padding:22,display:'flex',flexDirection:'column',gap:20,overflowY:'auto'}},
+      H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3,alignSelf:'flex-start'}},
+        ...tabs.map(([id,lbl])=>H('button',{key:id,onClick:()=>this.setState({finTab:id}),style:{padding:'7px 16px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:finTab===id?700:400,background:finTab===id?c.P:'transparent',color:finTab===id?'#fff':c.t2}},lbl)),
+      ),
+      finTab==='overview'&&H(React.Fragment,null,
+        H('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+          ...[['💰','฿'+(total/1e6).toFixed(1)+'M','งบทั้งหมด','ปีงบประมาณ 2567',c.P],['✅','฿'+((total*.62)/1e6).toFixed(1)+'M','จ่ายแล้ว','62% ของงบทั้งหมด',c.OK],['⏳','3','สถานศึกษารออนุมัติ','พื้นที่ EEC',c.WA]].map(([icon,v,l,s,clr],i)=>H('div',{key:i,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:'16px 18px',borderLeft:`4px solid ${clr}`}},
+            H('div',{style:{fontSize:20,marginBottom:8}},icon),
+            H('div',{style:{fontSize:22,fontWeight:900,color:clr}},v),
+            H('div',{style:{fontSize:12,fontWeight:700,color:c.tx}},l),
+            H('div',{style:{fontSize:10,color:c.t3,marginTop:2}},s),
+          )),
+        ),
+        H('div',{style:{display:'flex',gap:12,flexWrap:'wrap',marginBottom:4}},
+          ...Object.entries(zoneColors).map(([zone,clr])=>H('div',{key:zone,style:{display:'flex',alignItems:'center',gap:6}},H('span',{style:{width:10,height:10,borderRadius:2,background:clr,display:'inline-block'}}),H('span',{style:{fontSize:11,color:c.t2}},'พื้นที่: '+zone))),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,overflow:'hidden'}},
+          H('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12}},
+            H('thead',null,H('tr',{style:{background:c.s2}},
+              ...['สถานศึกษา','จังหวัด','พื้นที่','การใช้งานระบบ','ผลการดำเนินงาน','งบที่จัดสรร','การโอนเงิน'].map((h,i)=>H('th',{key:i,style:{padding:'10px 14px',textAlign:'left',fontWeight:700,color:c.t2,borderBottom:`1px solid ${c.br}`,fontSize:11}},h)),
+            )),
+            H('tbody',null,...D.fin.map((f,i)=>H('tr',{key:i,style:{borderBottom:`1px solid ${c.b2}`,background:f.pend?`${c.WA}06`:'transparent'}},
+              H('td',{style:{padding:'11px 14px',fontWeight:600,color:c.tx}},f.col),
+              H('td',{style:{padding:'11px 14px',color:c.t2}},f.prov),
+              H('td',{style:{padding:'11px 14px'}},H('span',{style:{padding:'2px 8px',borderRadius:12,fontSize:10,fontWeight:700,background:(zoneColors[f.zone]||c.IN)+'22',color:zoneColors[f.zone]||c.IN}},f.zone)),
+              H('td',{style:{padding:'11px 14px'}},H('div',{style:{display:'flex',alignItems:'center',gap:6}},H('div',{style:{width:48,height:6,background:c.b2,borderRadius:3,overflow:'hidden'}},H('div',{style:{height:'100%',width:f.usage+'%',background:f.usage>=80?c.OK:f.usage>=60?c.WA:c.ER,borderRadius:3}})),H('span',{style:{fontSize:11,fontWeight:600,color:c.tx}},f.usage+'%'))),
+              H('td',{style:{padding:'11px 14px'}},H('div',{style:{display:'flex',alignItems:'center',gap:6}},H('div',{style:{width:48,height:6,background:c.b2,borderRadius:3,overflow:'hidden'}},H('div',{style:{height:'100%',width:f.perf+'%',background:f.perf>=80?c.OK:c.WA,borderRadius:3}})),H('span',{style:{fontSize:11,fontWeight:600,color:c.tx}},f.perf+'%'))),
+              H('td',{style:{padding:'11px 14px',fontWeight:700,color:c.tx}},'฿'+(f.alloc/1e6).toFixed(2)+'M'),
+              H('td',{style:{padding:'11px 14px'}},f.pend?this.btn('✓ อนุมัติ',()=>this.approveFinance(f.id),{v:'ok',sm:true}):this.bdg('จ่ายแล้ว','ok')),
+            ))),
+          ),
+        ),
+      ),
+      finTab==='allocate'&&H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}},
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:22}},
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:16}},'เกณฑ์การจัดสรรงบประมาณ'),
+          H('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+            ...[['การใช้งานระบบ DVE',40],['ผลการดำเนินงานทวิภาคี',35],['จำนวนนักศึกษาทวิภาคี',15],['พื้นที่นโยบายพิเศษ',10]].map(([k,v],i)=>H('div',{key:i},
+              H('div',{style:{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:6}},H('span',{style:{color:c.tx,fontWeight:600}},k),H('span',{style:{color:c.P,fontWeight:800}},v+'%')),
+              H('div',{style:{height:10,background:c.b2,borderRadius:5}},H('div',{style:{height:'100%',width:v+'%',background:c.P,borderRadius:5,transformOrigin:'left'}})),
+            )),
+          ),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:22}},
+          H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:16}},'สรุปงบตามพื้นที่'),
+          this.barChart([{v:4820000,label:'กทม.',short:'4.8M'},{v:2100000,label:'EEC',short:'2.1M'},{v:1580000,label:'ภาคเหนือ',short:'1.6M'},{v:1920000,label:'อีสาน',short:'1.9M'},{v:920000,label:'ชายแดนใต้',short:'0.9M'}],{w:360,h:180,clr:c.P}),
+        ),
+      ),
+      finTab==='history'&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:24,textAlign:'center'}},
+        H('div',{style:{fontSize:36,marginBottom:12}},'📋'),
+        H('div',{style:{fontSize:15,fontWeight:700,color:c.tx,marginBottom:6}},'ประวัติการโอนเงิน'),
+        H('div',{style:{fontSize:12,color:c.t2,marginBottom:20}},'ข้อมูลการโอนเงิน 12 เดือนที่ผ่านมา'),
+        this.lineChart([{v:4.2,y:'ก.ค.66',vl:'4.2M'},{v:5.8,y:'ส.ค.66',vl:'5.8M'},{v:3.4,y:'ก.ย.66',vl:'3.4M'},{v:6.1,y:'ต.ค.66',vl:'6.1M'},{v:4.9,y:'พ.ย.66',vl:'4.9M'},{v:8.2,y:'ธ.ค.66',vl:'8.2M'}],{w:560,h:160,clr:c.P}),
+      ),
+    );
+  }
+
+  /* ─── REPORTS PAGE ─────────────────────────────────────────────────── */
+  renderReports = () => {
+    const H=this.h, c=this.c(), D=this.data();
+    const{repType}=this.state;
+    const tabs=[['internship','การฝึกงาน'],['ppp','PPP'],['finance','การเงิน'],['supervision','นิเทศ']];
+    return H('div',{style:{padding:22,display:'flex',flexDirection:'column',gap:20,overflowY:'auto'}},
+      H('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}},
+        H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3}},
+          ...tabs.map(([id,lbl])=>H('button',{key:id,onClick:()=>this.setState({repType:id}),style:{padding:'7px 16px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:12,fontWeight:repType===id?700:400,background:repType===id?c.P:'transparent',color:repType===id?'#fff':c.t2}},lbl)),
+        ),
+        H('div',{style:{display:'flex',gap:8}},
+          H('select',{style:{padding:'7px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",cursor:'pointer',outline:'none'}},H('option',null,'ปีการศึกษา 2567'),H('option',null,'ปีการศึกษา 2566')),
+          this.btn('📥 Export PDF',()=>{},{v:'gh'}),
+          this.btn('📊 Export Excel',()=>{},{v:'gh'}),
+        ),
+      ),
+      repType==='internship'&&H(React.Fragment,null,
+        H('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}},
+          ...[['🎓',this.fmt(D.kpi.intern),'นักศึกษาฝึกงาน',c.P],['🏭',this.fmt(D.kpi.ent),'สถานประกอบการ',c.G],['✅','218','อนุมัติแล้ว',c.OK],['📄','215','ออกหนังสือแล้ว',c.IN]].map(([icon,v,l,clr],i)=>H('div',{key:i,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:'14px 16px',borderTop:`3px solid ${clr}`,animation:`fadeUp .4s ease ${i*.06}s`}},H('div',{style:{fontSize:20,marginBottom:6}},icon),H('div',{style:{fontSize:22,fontWeight:900,color:clr}},v),H('div',{style:{fontSize:12,color:c.t2,marginTop:2}},l))),
+        ),
+        H('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}},
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:14}},'แนวโน้มนักศึกษาฝึกงาน'),
+            this.lineChart(D.trend,{w:380,h:150,clr:c.P}),
+          ),
+          H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+            H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:14}},'สัดส่วนตามสาขาวิชา'),
+            H('div',{style:{display:'flex',alignItems:'center',gap:20}},
+              this.donut(D.fields,{sz:120,th:22}),
+              H('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+                ...D.fields.map((f,i)=>H('div',{key:i,style:{display:'flex',alignItems:'center',gap:7}},H('span',{style:{width:10,height:10,borderRadius:2,background:f.color,flexShrink:0}}),H('span',{style:{fontSize:12,color:c.t2}},f.label),H('span',{style:{fontSize:11,fontWeight:700,color:c.tx,marginLeft:4}},f.v+'%'))),
+              ),
+            ),
+          ),
+        ),
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:'20px 22px'}},
+          H('div',{style:{fontSize:13,fontWeight:700,color:c.tx,marginBottom:14}},'10 จังหวัดที่มีนักศึกษาฝึกงานมากที่สุด'),
+          this.barChart(D.prov,{w:900,h:170,clr:c.P}),
+        ),
+      ),
+      (repType==='ppp'||repType==='finance'||repType==='supervision')&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:14,padding:24}},
+        H('div',{style:{fontSize:14,fontWeight:700,color:c.tx,marginBottom:18}},'รายงาน'+{ppp:'ระบบ PPP',finance:'การเงิน',supervision:'นิเทศนักศึกษา'}[repType]),
+        this.barChart(
+          repType==='ppp'?D.ppp.map(p=>({v:p.dem,label:p.prov.slice(0,8),short:String(p.dem)})):
+          repType==='supervision'?D.sup.map(s=>({v:s.vis+1,label:s.sv.replace('ว่าที่ร.ต.','อ.').slice(0,8),short:String(s.vis+1)})):
+          D.fin.map(f=>({v:f.alloc/10000,label:f.prov,short:(f.alloc/1e6).toFixed(1)+'M'})),
+          {w:700,h:200,clr:c.P}),
+      ),
+    );
+  }
+
+  /* ─── APP SHELL ────────────────────────────────────────────────────── */
+  renderApp = () => {
+    const H=this.h, c=this.c();
+    const{page}=this.state;
+    const pages={dashboard:this.renderDashboard,requests:this.renderRequests,ppp:this.renderPPP,supervision:this.renderSupervision,enterprise:this.renderEnterprise,finance:this.renderFinance,reports:this.renderReports};
+    const renderPage=pages[page]||this.renderDashboard;
+    return H('div',{style:{display:'flex',height:'100vh',fontFamily:"'Sarabun',sans-serif",background:c.bg}},
+      this.renderSidebar(),
+      H('div',{style:{flex:1,display:'flex',flexDirection:'column',height:'100vh'}},
+        this.renderHeader(),
+        H('div',{style:{flex:1,overflowY:'auto'}},renderPage()),
+      ),
+    );
+  }
+
+  renderVals() {
+    const c=this.c();
+    const{page,loggedIn}=this.state;
+    let pageContent;
+    if(page==='login') pageContent=this.renderLogin();
+    else if(!loggedIn||page==='public') pageContent=this.renderPublic();
+    else pageContent=this.renderApp();
+    return {
+      rootStyle:{fontFamily:"'Sarabun',sans-serif",minHeight:'100vh',background:c.bg,color:c.tx,transition:'background .3s,color .3s'},
+      pageContent,
+    };
+  }
+}
+</script>
+</body>
+</html>
