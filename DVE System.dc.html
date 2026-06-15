@@ -40,6 +40,9 @@ class Component extends DCLogic {
     pppTab:'estates',
     supTab:'list',
     repType:'internship',
+    usrTab:'list', usrSearch:'', usrRole:'', usrSel:null, usrForm:false,
+    usrFormData:{role:'teacher',name:'',institution:'',username:'',password:'',student_code:'',national_id:''},
+    dUsers:[],
     // ── API data (preloaded with demo values; overwritten from API) ──────
     dKpi:{stud:285432,intern:42187,ent:8935,col:423,sup:12847,ppp:45},
     dTrend:[
@@ -140,7 +143,7 @@ class Component extends DCLogic {
 
   loadData = async () => {
     try {
-      const [kpi, trend, prov, fields, reqs, ents, dups, fin, ppp, sup, notifs] = await Promise.all([
+      const [kpi, trend, prov, fields, reqs, ents, dups, fin, ppp, sup, notifs, users] = await Promise.all([
         this.api('kpi.php'),
         this.api('kpi.php?type=trend'),
         this.api('kpi.php?type=province'),
@@ -152,11 +155,12 @@ class Component extends DCLogic {
         this.api('ppp.php'),
         this.api('supervision.php'),
         this.api('notifications.php'),
+        this.api('users.php'),
       ]);
       this.setState({
         dKpi: kpi, dTrend: trend, dProv: prov, dFields: fields,
         dReqs: reqs, dEnts: ents, dDups: dups, dFin: fin,
-        dPpp: ppp, dSup: sup, dNotifs: notifs,
+        dPpp: ppp, dSup: sup, dNotifs: notifs, dUsers: users,
         notifN: notifs.filter(n => !n.is_read).length,
       });
     } catch (e) {
@@ -215,6 +219,29 @@ class Component extends DCLogic {
     try {
       await this.api('finance.php', { method: 'PATCH', body: { id, action: 'approve' } });
       this.setState({ dFin: this.state.dFin.map(f => f.id === id ? { ...f, pend: false } : f) });
+    } catch (e) {}
+  }
+
+  createUser = async () => {
+    const fd = this.state.usrFormData;
+    try {
+      await this.api('users.php', { method: 'POST', body: fd });
+      const users = await this.api('users.php');
+      this.setState({ dUsers: users, usrForm: false, usrFormData: { role:'teacher',name:'',institution:'',username:'',password:'',student_code:'',national_id:'' } });
+    } catch (e) { alert(e.message); }
+  }
+
+  updateUser = async (id, patch) => {
+    try {
+      await this.api('users.php', { method: 'PATCH', body: { id, ...patch } });
+      this.setState({ dUsers: this.state.dUsers.map(u => u.id === id ? { ...u, ...patch } : u), usrSel: null });
+    } catch (e) { alert(e.message); }
+  }
+
+  deleteUser = async (id) => {
+    try {
+      await this.api('users.php', { method: 'DELETE', body: { id } });
+      this.setState({ dUsers: this.state.dUsers.map(u => u.id === id ? { ...u, active: false } : u), usrSel: null });
     } catch (e) {}
   }
 
@@ -561,6 +588,7 @@ class Component extends DCLogic {
   renderSidebar = () => {
     const H=this.h, c=this.c();
     const{page,name,inst,sidebar,notifN}=this.state;
+    const{role}=this.state;
     const nav=[
       {id:'dashboard',icon:'🏠',label:'หน้าหลัก'},
       {id:'requests',icon:'📋',label:'คำร้องฝึกงาน',badge:notifN},
@@ -569,6 +597,7 @@ class Component extends DCLogic {
       {id:'enterprise',icon:'🏭',label:'สถานประกอบการ'},
       {id:'finance',icon:'💰',label:'การเงิน'},
       {id:'reports',icon:'📊',label:'รายงาน'},
+      ...(role==='admin'?[{id:'users',icon:'👥',label:'จัดการผู้ใช้'}]:[]),
     ];
     if(!sidebar) return H('div',{style:{width:56,background:c.SB,borderRight:`1px solid ${c.SBR}`,display:'flex',flexDirection:'column',alignItems:'center',padding:'14px 0',gap:4,flexShrink:0}},
       H('div',{onClick:()=>this.setState({sidebar:true}),style:{cursor:'pointer',marginBottom:10}},this.logo(30)),
@@ -612,7 +641,7 @@ class Component extends DCLogic {
   renderHeader = () => {
     const H=this.h, c=this.c();
     const{page,notifN,notif}=this.state;
-    const titles={dashboard:'หน้าหลัก',requests:'คำร้องฝึกงาน / ฝึกอาชีพ',ppp:'ระบบ PPP — Public Private Partnership',supervision:'นิเทศนักศึกษา',enterprise:'บริหารข้อมูลสถานประกอบการ',finance:'ระบบการเงินสนับสนุน',reports:'รายงานและสถิติ'};
+    const titles={dashboard:'หน้าหลัก',requests:'คำร้องฝึกงาน / ฝึกอาชีพ',ppp:'ระบบ PPP — Public Private Partnership',supervision:'นิเทศนักศึกษา',enterprise:'บริหารข้อมูลสถานประกอบการ',finance:'ระบบการเงินสนับสนุน',reports:'รายงานและสถิติ',users:'จัดการผู้ใช้งาน'};
     const notifs=this.state.dNotifs;
     return H('header',{style:{height:58,background:c.sf,borderBottom:`1px solid ${c.br}`,padding:'0 22px',display:'flex',alignItems:'center',gap:14,flexShrink:0,position:'relative',zIndex:50}},
       H('div',{style:{flex:1}},
@@ -1199,11 +1228,127 @@ class Component extends DCLogic {
     );
   }
 
+  /* ─── USERS PAGE (Admin only) ─────────────────────────────────────── */
+  renderUsers = () => {
+    const H=this.h, c=this.c();
+    const{usrSearch,usrRole,usrSel,usrForm,usrFormData,dUsers}=this.state;
+    const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',admin:'ศูนย์ทวิภาคี'};
+    const roleColor={student:c.IN,teacher:c.OK,officer:c.G,soj:c.WA,admin:c.P};
+    const roles=['','student','teacher','officer','soj','admin'];
+
+    const filtered=dUsers.filter(u=>{
+      const rOk=!usrRole||u.role===usrRole;
+      const sOk=!usrSearch||u.name.includes(usrSearch)||u.username?.includes(usrSearch)||u.institution?.includes(usrSearch);
+      return rOk&&sOk;
+    });
+    const selUser=usrSel?dUsers.find(u=>u.id===usrSel):null;
+
+    const inp=(lbl,key,type='text',ph='')=>H('div',null,
+      H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},lbl),
+      H('input',{type,value:usrFormData[key]||'',placeholder:ph,
+        onChange:e=>this.setState({usrFormData:{...usrFormData,[key]:e.target.value}}),
+        style:{width:'100%',padding:'8px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+    );
+
+    const isStudent=usrFormData.role==='student';
+
+    return H('div',{style:{padding:22,display:'flex',gap:18,height:'100%',overflowY:'auto'}},
+      H('div',{style:{flex:1,display:'flex',flexDirection:'column',gap:14}},
+        /* toolbar */
+        H('div',{style:{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}},
+          H('div',{style:{display:'flex',gap:2,background:c.s2,borderRadius:9,padding:3}},
+            ...roles.map(r=>H('button',{key:r||'all',onClick:()=>this.setState({usrRole:r,usrSel:null}),
+              style:{padding:'6px 13px',borderRadius:7,border:'none',cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:11,
+                fontWeight:usrRole===r?700:400,background:usrRole===r?c.P:'transparent',color:usrRole===r?'#fff':c.t2}},
+              r?roleLabel[r]:'ทั้งหมด')),
+          ),
+          H('div',{style:{flex:1,minWidth:180,position:'relative'}},
+            H('input',{type:'text',placeholder:'ค้นหาชื่อ / ชื่อผู้ใช้ / สถานศึกษา...',value:usrSearch,
+              onChange:e=>this.setState({usrSearch:e.target.value}),
+              style:{width:'100%',padding:'8px 12px 8px 28px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+            H('span',{style:{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:10,color:c.t3}},'🔍'),
+          ),
+          this.btn('+ เพิ่มผู้ใช้ใหม่',()=>this.setState({usrForm:true,usrSel:null})),
+        ),
+        /* summary chips */
+        H('div',{style:{display:'flex',gap:10,flexWrap:'wrap'}},
+          ...Object.entries(roleLabel).map(([r,lbl])=>{
+            const cnt=dUsers.filter(u=>u.role===r).length;
+            return H('div',{key:r,style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:10,padding:'8px 14px',display:'flex',alignItems:'center',gap:8}},
+              H('span',{style:{width:8,height:8,borderRadius:4,background:roleColor[r],display:'inline-block'}}),
+              H('span',{style:{fontSize:12,color:c.t2}},lbl),
+              H('span',{style:{fontSize:14,fontWeight:800,color:c.tx,marginLeft:4}},cnt),
+            );
+          }),
+        ),
+        /* table */
+        H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,overflow:'hidden'}},
+          H('div',{style:{display:'grid',gridTemplateColumns:'1fr 100px 1fr 120px 90px 80px',padding:'9px 14px',borderBottom:`1px solid ${c.br}`,fontSize:10,fontWeight:700,color:c.t2,background:c.s2}},
+            ...['ชื่อ-นามสกุล','ประเภท','สถานศึกษา','ชื่อผู้ใช้','วันที่สร้าง','สถานะ'].map((h,i)=>H('div',{key:i},h)),
+          ),
+          filtered.length===0&&H('div',{style:{padding:'32px',textAlign:'center',color:c.t3,fontSize:13}},'ไม่พบผู้ใช้งาน'),
+          ...filtered.map((u,i)=>H('div',{key:i,onClick:()=>this.setState({usrSel:u.id===usrSel?null:u.id,usrForm:false}),
+            style:{display:'grid',gridTemplateColumns:'1fr 100px 1fr 120px 90px 80px',padding:'11px 14px',fontSize:12,
+              color:c.tx,cursor:'pointer',background:usrSel===u.id?c.PP:'transparent',
+              borderBottom:i<filtered.length-1?`1px solid ${c.b2}`:'none',transition:'background .1s'}},
+            H('div',{style:{fontWeight:600,color:c.tx,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},u.name),
+            H('div',null,H('span',{style:{padding:'2px 8px',borderRadius:12,fontSize:10,fontWeight:700,
+              background:(roleColor[u.role]||c.P)+'22',color:roleColor[u.role]||c.P}},roleLabel[u.role]||u.role)),
+            H('div',{style:{color:c.t2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},u.college_name||u.institution||'-'),
+            H('div',{style:{color:c.t2,fontFamily:'monospace',fontSize:11}},u.username||u.student_code||'-'),
+            H('div',{style:{color:c.t3,fontSize:11}},u.created_at||'-'),
+            H('div',null,u.active?this.bdg('ใช้งาน','ok'):this.bdg('ปิดใช้','er')),
+          )),
+        ),
+      ),
+      /* side panel — edit or create */
+      (selUser||usrForm)&&H('div',{style:{width:320,flexShrink:0,display:'flex',flexDirection:'column',gap:14}},
+        H('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+          H('div',{style:{fontSize:14,fontWeight:800,color:c.tx}},usrForm?'เพิ่มผู้ใช้ใหม่':'แก้ไขผู้ใช้'),
+          H('button',{onClick:()=>this.setState({usrSel:null,usrForm:false}),style:{background:'none',border:'none',cursor:'pointer',fontSize:18,color:c.t2}},'×'),
+        ),
+        usrForm&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:16,display:'flex',flexDirection:'column',gap:12}},
+          H('div',null,
+            H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},'ประเภทผู้ใช้'),
+            H('select',{value:usrFormData.role,onChange:e=>this.setState({usrFormData:{...usrFormData,role:e.target.value}}),
+              style:{width:'100%',padding:'8px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none'}},
+              ...Object.entries(roleLabel).map(([r,lbl])=>H('option',{key:r,value:r},lbl)),
+            ),
+          ),
+          inp('ชื่อ-นามสกุล','name','text','เช่น นายสมชาย ใจดี'),
+          inp('สถานศึกษา / หน่วยงาน','institution','text','เช่น วิทยาลัยเทคนิคกรุงเทพ'),
+          isStudent?H(React.Fragment,null,
+            inp('รหัสนักศึกษา','student_code','text','เช่น 6601012345'),
+            inp('เลขประจำตัวประชาชน (ใช้เป็นรหัสผ่าน)','national_id','password','X-XXXX-XXXXX-XX-X'),
+          ):H(React.Fragment,null,
+            inp('ชื่อผู้ใช้งาน','username','text','username'),
+            inp('รหัสผ่าน','password','password','อย่างน้อย 8 ตัวอักษร'),
+          ),
+          this.btn('💾 บันทึก',()=>this.createUser(),{v:'ok'}),
+        ),
+        selUser&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:16,display:'flex',flexDirection:'column',gap:10}},
+          ...[['ชื่อ-นามสกุล',selUser.name],['ประเภท',roleLabel[selUser.role]||selUser.role],
+              ['สถานศึกษา',selUser.college_name||selUser.institution||'-'],
+              ['ชื่อผู้ใช้',selUser.username||selUser.student_code||'-'],
+              ['วันที่สร้าง',selUser.created_at||'-']].map(([k,v],i)=>
+            H('div',{key:i,style:{display:'flex',justifyContent:'space-between',fontSize:12,paddingBottom:i<4?8:0,borderBottom:i<4?`1px solid ${c.b2}`:'none'}},
+              H('span',{style:{color:c.t2}},k),H('span',{style:{color:c.tx,fontWeight:600}},v),
+            )
+          ),
+          H('div',{style:{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}},
+            selUser.active&&this.btn('🔒 ปิดการใช้งาน',()=>this.deleteUser(selUser.id),{v:'er',sm:true}),
+            !selUser.active&&this.btn('🔓 เปิดใช้งาน',()=>this.updateUser(selUser.id,{active:true}),{v:'ok',sm:true}),
+          ),
+        ),
+      ),
+    );
+  }
+
   /* ─── APP SHELL ────────────────────────────────────────────────────── */
   renderApp = () => {
     const H=this.h, c=this.c();
     const{page}=this.state;
-    const pages={dashboard:this.renderDashboard,requests:this.renderRequests,ppp:this.renderPPP,supervision:this.renderSupervision,enterprise:this.renderEnterprise,finance:this.renderFinance,reports:this.renderReports};
+    const pages={dashboard:this.renderDashboard,requests:this.renderRequests,ppp:this.renderPPP,supervision:this.renderSupervision,enterprise:this.renderEnterprise,finance:this.renderFinance,reports:this.renderReports,users:this.renderUsers};
     const renderPage=pages[page]||this.renderDashboard;
     return H('div',{style:{display:'flex',height:'100vh',fontFamily:"'Sarabun',sans-serif",background:c.bg}},
       this.renderSidebar(),
