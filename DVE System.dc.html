@@ -1232,7 +1232,7 @@ class Component extends DCLogic {
   renderUsers = () => {
     const H=this.h, c=this.c();
     const{usrSearch,usrRole,usrSel,usrForm,usrFormData,dUsers}=this.state;
-    const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',admin:'ศูนย์ทวิภาคี'};
+    const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',admin:'Admin (ผู้ดูแลระบบ)'};
     const roleColor={student:c.IN,teacher:c.OK,officer:c.G,soj:c.WA,admin:c.P};
     const roles=['','student','teacher','officer','soj','admin'];
 
