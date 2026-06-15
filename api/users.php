@@ -100,9 +100,14 @@ if (method('PATCH')) {
     $fields = [];
     $params = [];
 
-    if (isset($b['name']))        { $fields[] = 'name = ?';        $params[] = $b['name']; }
-    if (isset($b['institution'])) { $fields[] = 'institution = ?'; $params[] = $b['institution']; }
-    if (isset($b['role']))        { $fields[] = 'role = ?';        $params[] = $b['role']; }
+    if (isset($b['name']))        { $fields[] = 'name = ?';        $params[] = trim($b['name']); }
+    if (isset($b['institution'])) { $fields[] = 'institution = ?'; $params[] = trim($b['institution']); }
+    if (isset($b['role']))        {
+        $allowed = ['student','teacher','officer','soj','center','admin'];
+        if (!in_array($b['role'], $allowed, true)) json_err('Invalid role');
+        $fields[] = 'role = ?'; $params[] = $b['role'];
+    }
+    if (isset($b['username']))    { $fields[] = 'username = ?';    $params[] = trim($b['username']) ?: null; }
     if (!empty($b['password']))   {
         $fields[] = 'password_hash = ?';
         $params[] = password_hash($b['password'], PASSWORD_BCRYPT);

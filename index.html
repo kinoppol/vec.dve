@@ -40,7 +40,7 @@ class Component extends DCLogic {
     pppTab:'estates',
     supTab:'list',
     repType:'internship',
-    usrTab:'list', usrSearch:'', usrRole:'', usrSel:null, usrForm:false,
+    usrTab:'list', usrSearch:'', usrRole:'', usrSel:null, usrForm:false, usrEdit:false, usrEditData:{},
     usrFormData:{role:'teacher',name:'',institution:'',username:'',password:'',student_code:'',national_id:''},
     usrColOpts:[], usrColShow:false,
     dUsers:[],
@@ -1261,7 +1261,7 @@ class Component extends DCLogic {
   /* ─── USERS PAGE (Admin only) ─────────────────────────────────────── */
   renderUsers = () => {
     const H=this.h, c=this.c();
-    const{usrSearch,usrRole,usrSel,usrForm,usrFormData,usrColOpts,usrColShow,dUsers}=this.state;
+    const{usrSearch,usrRole,usrSel,usrForm,usrFormData,usrColOpts,usrColShow,usrEdit,usrEditData,dUsers}=this.state;
     const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',center:'ศูนย์ทวิภาคี',admin:'Admin'};
     const roleColor={student:c.IN,teacher:c.OK,officer:c.G,soj:c.WA,center:c.P,admin:'#7B1D2D'};
     const roles=['','student','teacher','officer','soj','center','admin'];
@@ -1383,17 +1383,66 @@ class Component extends DCLogic {
           this.btn('💾 บันทึก',()=>this.createUser(),{v:'ok'}),
         ),
         selUser&&H('div',{style:{background:c.sf,border:`1px solid ${c.br}`,borderRadius:12,padding:16,display:'flex',flexDirection:'column',gap:10}},
-          ...[['ชื่อ-นามสกุล',selUser.name],['ประเภท',roleLabel[selUser.role]||selUser.role],
-              ['สถานศึกษา',selUser.college_name||selUser.institution||'-'],
-              ['ชื่อผู้ใช้',selUser.username||selUser.student_code||'-'],
-              ['วันที่สร้าง',selUser.created_at||'-']].map(([k,v],i)=>
-            H('div',{key:i,style:{display:'flex',justifyContent:'space-between',fontSize:12,paddingBottom:i<4?8:0,borderBottom:i<4?`1px solid ${c.b2}`:'none'}},
-              H('span',{style:{color:c.t2}},k),H('span',{style:{color:c.tx,fontWeight:600}},v),
-            )
+          H('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}},
+            H('div',{style:{fontSize:13,fontWeight:800,color:c.tx}},usrEdit?'แก้ไขข้อมูล':'ข้อมูลผู้ใช้'),
+            H('button',{onClick:()=>this.setState(usrEdit?{usrEdit:false}:{usrEdit:true,usrEditData:{name:selUser.name,institution:selUser.college_name||selUser.institution||'',role:selUser.role,username:selUser.username||'',password:''}}),
+              style:{background:'none',border:'none',cursor:'pointer',fontSize:12,color:usrEdit?c.t2:c.P,fontWeight:600,fontFamily:"'Sarabun',sans-serif"}},
+              usrEdit?'ยกเลิก':'✏️ แก้ไข'),
           ),
-          H('div',{style:{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}},
-            selUser.active&&this.btn('🔒 ปิดการใช้งาน',()=>this.deleteUser(selUser.id),{v:'er',sm:true}),
-            !selUser.active&&this.btn('🔓 เปิดใช้งาน',()=>this.updateUser(selUser.id,{active:true}),{v:'ok',sm:true}),
+          usrEdit?H(React.Fragment,null,
+            ...[
+              ['ชื่อ-นามสกุล','name','text'],
+              ['สถานศึกษา / หน่วยงาน','institution','text'],
+            ].map(([lbl,key,type])=>H('div',{key},
+              H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},lbl),
+              H('input',{type,value:usrEditData[key]||'',
+                onChange:e=>this.setState({usrEditData:{...usrEditData,[key]:e.target.value}}),
+                style:{width:'100%',padding:'7px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+            )),
+            H('div',null,
+              H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},'ประเภทผู้ใช้'),
+              H('select',{value:usrEditData.role||selUser.role,
+                onChange:e=>this.setState({usrEditData:{...usrEditData,role:e.target.value}}),
+                style:{width:'100%',padding:'7px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none'}},
+                ...Object.entries(roleLabel).map(([r,lbl])=>H('option',{key:r,value:r},lbl)),
+              ),
+            ),
+            selUser.role!=='student'&&H('div',null,
+              H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},'ชื่อผู้ใช้งาน'),
+              H('input',{type:'text',value:usrEditData.username||'',
+                onChange:e=>this.setState({usrEditData:{...usrEditData,username:e.target.value}}),
+                style:{width:'100%',padding:'7px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+            ),
+            H('div',null,
+              H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},'รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)'),
+              H('input',{type:'password',value:usrEditData.password||'',placeholder:'••••••••',
+                onChange:e=>this.setState({usrEditData:{...usrEditData,password:e.target.value}}),
+                style:{width:'100%',padding:'7px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'}}),
+            ),
+            this.btn('💾 บันทึกการแก้ไข',async()=>{
+              if(!usrEditData.name?.trim()){alert('กรุณาระบุชื่อ-นามสกุล');return;}
+              try{
+                const patch={name:usrEditData.name,institution:usrEditData.institution,role:usrEditData.role};
+                if(usrEditData.username!==undefined)patch.username=usrEditData.username;
+                if(usrEditData.password)patch.password=usrEditData.password;
+                await this.api('users.php',{method:'PATCH',body:{id:selUser.id,...patch}});
+                const users=await this.api('users.php');
+                this.setState({dUsers:users,usrEdit:false,usrEditData:{}});
+              }catch(e){alert(e.message);}
+            },{v:'ok'}),
+          ):H(React.Fragment,null,
+            ...[['ชื่อ-นามสกุล',selUser.name],['ประเภท',roleLabel[selUser.role]||selUser.role],
+                ['สถานศึกษา',selUser.college_name||selUser.institution||'-'],
+                ['ชื่อผู้ใช้',selUser.username||selUser.student_code||'-'],
+                ['วันที่สร้าง',selUser.created_at||'-']].map(([k,v],i)=>
+              H('div',{key:i,style:{display:'flex',justifyContent:'space-between',fontSize:12,paddingBottom:i<4?8:0,borderBottom:i<4?`1px solid ${c.b2}`:'none'}},
+                H('span',{style:{color:c.t2}},k),H('span',{style:{color:c.tx,fontWeight:600,textAlign:'right',maxWidth:'60%'}},v),
+              )
+            ),
+            H('div',{style:{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}},
+              selUser.active&&this.btn('🔒 ปิดการใช้งาน',()=>this.deleteUser(selUser.id),{v:'er',sm:true}),
+              !selUser.active&&this.btn('🔓 เปิดใช้งาน',()=>this.updateUser(selUser.id,{username:selUser.username,active:true}),{v:'ok',sm:true}),
+            ),
           ),
         ),
       ),
