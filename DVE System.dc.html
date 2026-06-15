@@ -607,10 +607,7 @@ class Component extends DCLogic {
             H('div',{style:{fontSize:9,color:c.t3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},inst),
           ),
         ),
-        H('div',{style:{display:'flex',gap:6}},
-          H('button',{onClick:this.nt,title:'สลับธีม',style:{flex:1,background:c.s2,border:`1px solid ${c.br}`,borderRadius:7,padding:'6px 4px',cursor:'pointer',fontSize:11,fontFamily:"'Sarabun',sans-serif",color:c.t2}},this.ti()+' '+this.tl()),
-          H('button',{onClick:()=>this.setState({loggedIn:false,page:'public',role:null,name:'',inst:''}),style:{background:c.ERP,border:'none',borderRadius:7,padding:'6px 8px',cursor:'pointer',fontSize:11,color:c.ER,fontFamily:"'Sarabun',sans-serif",fontWeight:600}},'ออก'),
-        ),
+        H('button',{onClick:()=>this.setState({loggedIn:false,page:'public',role:null,name:'',inst:''}),style:{width:'100%',background:c.ERP,border:'none',borderRadius:7,padding:'7px 8px',cursor:'pointer',fontSize:11,color:c.ER,fontFamily:"'Sarabun',sans-serif",fontWeight:600}},'ออกจากระบบ'),
       ),
     );
   }
@@ -629,6 +626,7 @@ class Component extends DCLogic {
       H('div',{style:{position:'relative'}},
         H('input',{type:'text',placeholder:'🔍 ค้นหา...',style:{padding:'7px 12px',borderRadius:8,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",width:180,outline:'none'}}),
       ),
+      H('button',{onClick:this.nt,title:'สลับธีม',style:{background:c.s2,border:`1px solid ${c.br}`,borderRadius:8,padding:'7px 10px',cursor:'pointer',fontSize:13,color:c.tx,fontFamily:"'Sarabun',sans-serif"}},this.ti()+' '+this.tl()),
       H('div',{style:{position:'relative'}},
         H('button',{onClick:()=>this.setState(s=>({notif:!s.notif})),style:{background:c.s2,border:`1px solid ${c.br}`,borderRadius:8,padding:'7px 9px',cursor:'pointer',fontSize:15,position:'relative'}},
           '🔔',
