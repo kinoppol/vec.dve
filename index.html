@@ -43,6 +43,7 @@ class Component extends DCLogic {
     usrTab:'list', usrSearch:'', usrRole:'', usrSel:null, usrForm:false,
     usrFormData:{role:'teacher',name:'',institution:'',username:'',password:'',student_code:'',national_id:''},
     dUsers:[],
+    dSettings:{sys_requests:true,sys_ppp:true,sys_supervision:true,sys_finance:true},
     // ── API data (preloaded with demo values; overwritten from API) ──────
     dKpi:{stud:285432,intern:42187,ent:8935,col:423,sup:12847,ppp:45},
     dTrend:[
@@ -143,7 +144,7 @@ class Component extends DCLogic {
 
   loadData = async () => {
     try {
-      const [kpi, trend, prov, fields, reqs, ents, dups, fin, ppp, sup, notifs, users] = await Promise.all([
+      const [kpi, trend, prov, fields, reqs, ents, dups, fin, ppp, sup, notifs, users, settings] = await Promise.all([
         this.api('kpi.php'),
         this.api('kpi.php?type=trend'),
         this.api('kpi.php?type=province'),
@@ -156,11 +157,13 @@ class Component extends DCLogic {
         this.api('supervision.php'),
         this.api('notifications.php'),
         this.api('users.php'),
+        this.api('settings.php'),
       ]);
       this.setState({
         dKpi: kpi, dTrend: trend, dProv: prov, dFields: fields,
         dReqs: reqs, dEnts: ents, dDups: dups, dFin: fin,
         dPpp: ppp, dSup: sup, dNotifs: notifs, dUsers: users,
+        dSettings: settings,
         notifN: notifs.filter(n => !n.is_read).length,
       });
     } catch (e) {
@@ -241,6 +244,17 @@ class Component extends DCLogic {
       await this.api('users.php', { method: 'PATCH', body: { id, ...patch } });
       this.setState({ dUsers: this.state.dUsers.map(u => u.id === id ? { ...u, ...patch } : u), usrSel: null });
     } catch (e) { alert(e.message); }
+  }
+
+  updateSetting = async (key, value) => {
+    const prev = this.state.dSettings;
+    this.setState({ dSettings: { ...prev, [key]: value } });
+    try {
+      await this.api('settings.php', { method: 'POST', body: { key, value } });
+    } catch (e) {
+      this.setState({ dSettings: prev });
+      alert(e.message);
+    }
   }
 
   deleteUser = async (id) => {
@@ -594,16 +608,17 @@ class Component extends DCLogic {
   renderSidebar = () => {
     const H=this.h, c=this.c();
     const{page,name,inst,sidebar,notifN}=this.state;
-    const{role}=this.state;
+    const{role,dSettings}=this.state;
     const nav=[
       {id:'dashboard',icon:'🏠',label:'หน้าหลัก'},
-      {id:'requests',icon:'📋',label:'คำร้องฝึกงาน',badge:notifN},
-      {id:'ppp',icon:'🤝',label:'ระบบ PPP'},
-      {id:'supervision',icon:'🗺️',label:'นิเทศนักศึกษา'},
+      ...(dSettings.sys_requests!==false?[{id:'requests',icon:'📋',label:'คำร้องฝึกงาน',badge:notifN}]:[]),
+      ...(dSettings.sys_ppp!==false?[{id:'ppp',icon:'🤝',label:'ระบบ PPP'}]:[]),
+      ...(dSettings.sys_supervision!==false?[{id:'supervision',icon:'🗺️',label:'นิเทศนักศึกษา'}]:[]),
       {id:'enterprise',icon:'🏭',label:'สถานประกอบการ'},
-      {id:'finance',icon:'💰',label:'การเงิน'},
+      ...(dSettings.sys_finance!==false?[{id:'finance',icon:'💰',label:'การเงิน'}]:[]),
       {id:'reports',icon:'📊',label:'รายงาน'},
       ...(role==='admin'?[{id:'users',icon:'👥',label:'จัดการผู้ใช้'}]:[]),
+      ...(['admin','center'].includes(role)?[{id:'settings',icon:'⚙️',label:'ตั้งค่าระบบ'}]:[]),
     ];
     if(!sidebar) return H('div',{style:{width:56,background:c.SB,borderRight:`1px solid ${c.SBR}`,display:'flex',flexDirection:'column',alignItems:'center',padding:'14px 0',gap:4,flexShrink:0}},
       H('div',{onClick:()=>this.setState({sidebar:true}),style:{cursor:'pointer',marginBottom:10}},this.logo(30)),
@@ -647,7 +662,7 @@ class Component extends DCLogic {
   renderHeader = () => {
     const H=this.h, c=this.c();
     const{page,notifN,notif}=this.state;
-    const titles={dashboard:'หน้าหลัก',requests:'คำร้องฝึกงาน / ฝึกอาชีพ',ppp:'ระบบ PPP — Public Private Partnership',supervision:'นิเทศนักศึกษา',enterprise:'บริหารข้อมูลสถานประกอบการ',finance:'ระบบการเงินสนับสนุน',reports:'รายงานและสถิติ',users:'จัดการผู้ใช้งาน'};
+    const titles={dashboard:'หน้าหลัก',requests:'คำร้องฝึกงาน / ฝึกอาชีพ',ppp:'ระบบ PPP — Public Private Partnership',supervision:'นิเทศนักศึกษา',enterprise:'บริหารข้อมูลสถานประกอบการ',finance:'ระบบการเงินสนับสนุน',reports:'รายงานและสถิติ',users:'จัดการผู้ใช้งาน',settings:'ตั้งค่าระบบ'};
     const notifs=this.state.dNotifs;
     return H('header',{style:{height:58,background:c.sf,borderBottom:`1px solid ${c.br}`,padding:'0 22px',display:'flex',alignItems:'center',gap:14,flexShrink:0,position:'relative',zIndex:50}},
       H('div',{style:{flex:1}},
@@ -1351,10 +1366,52 @@ class Component extends DCLogic {
   }
 
   /* ─── APP SHELL ────────────────────────────────────────────────────── */
+  renderSettings = () => {
+    const H=this.h, c=this.c();
+    const{dSettings}=this.state;
+    const systems=[
+      {key:'sys_requests',   icon:'📋',label:'ระบบยื่นคำร้องขอออกฝึกงาน',    desc:'อนุญาตให้นักศึกษาและเจ้าหน้าที่ยื่นคำร้องขอออกฝึกงานผ่านระบบออนไลน์'},
+      {key:'sys_ppp',        icon:'🤝',label:'ระบบ PPP (Public-Private Partnership)', desc:'แสดงข้อมูลนิคมอุตสาหกรรมและความต้องการแรงงานจากสถานประกอบการ'},
+      {key:'sys_supervision',icon:'🗺️',label:'ระบบนิเทศนักศึกษา',            desc:'จัดการตารางนิเทศ บันทึกการเยี่ยม และติดตามความก้าวหน้าของนักศึกษา'},
+      {key:'sys_finance',    icon:'💰',label:'ระบบการเงิน',                   desc:'จัดการงบประมาณ อนุมัติการโอนเงิน และติดตามการใช้จ่ายของสถานศึกษา'},
+    ];
+    const toggle=(on,onToggle)=>H('button',{onClick:onToggle,
+      style:{width:48,height:26,borderRadius:13,border:'none',background:on?c.OK:c.br,
+             cursor:'pointer',position:'relative',transition:'background .2s',padding:0,flexShrink:0}},
+      H('span',{style:{position:'absolute',top:3,left:on?26:3,width:20,height:20,
+        borderRadius:10,background:'#fff',transition:'left .2s',
+        boxShadow:'0 1px 4px rgba(0,0,0,.25)',display:'block'}}),
+    );
+    return H('div',{style:{padding:28,maxWidth:680}},
+      H('div',{style:{marginBottom:24}},
+        H('div',{style:{fontSize:17,fontWeight:800,color:c.tx,marginBottom:4}},'ตั้งค่าระบบ'),
+        H('div',{style:{fontSize:12,color:c.t2}},'เปิด/ปิดการใช้งานระบบย่อย — มีผลทันทีสำหรับผู้ใช้ทุกคน'),
+      ),
+      H('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+        ...systems.map(s=>{
+          const on=dSettings[s.key]!==false;
+          return H('div',{key:s.key,style:{background:c.sf,border:`1px solid ${on?c.br:c.ER+'44'}`,borderRadius:14,padding:'18px 22px',display:'flex',alignItems:'center',gap:16,transition:'border-color .2s'}},
+            H('div',{style:{fontSize:26,width:42,textAlign:'center',flexShrink:0,opacity:on?1:.45,transition:'opacity .2s'}},s.icon),
+            H('div',{style:{flex:1}},
+              H('div',{style:{fontSize:14,fontWeight:700,color:on?c.tx:c.t2,marginBottom:3,transition:'color .2s'}},s.label),
+              H('div',{style:{fontSize:12,color:c.t3}},s.desc),
+              H('div',{style:{marginTop:6}},
+                H('span',{style:{fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:10,
+                  background:on?c.OKP||'#e6f9ed':c.ERP||'#fdecea',
+                  color:on?c.OK:c.ER}},on?'● เปิดใช้งาน':'○ ปิดใช้งาน'),
+              ),
+            ),
+            toggle(on,()=>this.updateSetting(s.key,!on)),
+          );
+        }),
+      ),
+    );
+  }
+
   renderApp = () => {
     const H=this.h, c=this.c();
     const{page}=this.state;
-    const pages={dashboard:this.renderDashboard,requests:this.renderRequests,ppp:this.renderPPP,supervision:this.renderSupervision,enterprise:this.renderEnterprise,finance:this.renderFinance,reports:this.renderReports,users:this.renderUsers};
+    const pages={dashboard:this.renderDashboard,requests:this.renderRequests,ppp:this.renderPPP,supervision:this.renderSupervision,enterprise:this.renderEnterprise,finance:this.renderFinance,reports:this.renderReports,users:this.renderUsers,settings:this.renderSettings};
     const renderPage=pages[page]||this.renderDashboard;
     return H('div',{style:{display:'flex',height:'100vh',fontFamily:"'Sarabun',sans-serif",background:c.bg}},
       this.renderSidebar(),

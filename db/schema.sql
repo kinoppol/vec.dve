@@ -204,6 +204,13 @@ CREATE TABLE IF NOT EXISTS duplicate_group_members (
   FOREIGN KEY (enterprise_id) REFERENCES enterprises(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ── System Settings ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS system_settings (
+  `key`      VARCHAR(50) PRIMARY KEY,
+  `value`    TINYINT(1)  NOT NULL DEFAULT 1,
+  updated_at TIMESTAMP   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── Notifications ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS notifications (
   id         INT AUTO_INCREMENT PRIMARY KEY,

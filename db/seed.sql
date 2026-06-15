@@ -142,6 +142,14 @@ INSERT INTO duplicate_group_members (group_id, enterprise_name, usage_count, sim
   (2,'PTT Plc.',9,79,0),
   (2,'บมจ.ปตท.',4,76,0);
 
+-- ── System Settings ───────────────────────────────────────────────────────
+INSERT INTO system_settings (`key`, `value`) VALUES
+  ('sys_requests',    1),
+  ('sys_ppp',         1),
+  ('sys_supervision', 1),
+  ('sys_finance',     1)
+ON DUPLICATE KEY UPDATE `key`=`key`;
+
 -- ── Notifications ──────────────────────────────────────────────────────────
 INSERT INTO notifications (`text`, created_at) VALUES
   ('คำร้องใหม่จาก นายสมชาย ใจดี',           DATE_SUB(NOW(), INTERVAL 5  MINUTE)),
