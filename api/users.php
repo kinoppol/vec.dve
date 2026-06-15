@@ -47,7 +47,7 @@ if (method('POST')) {
     $b    = body();
     $role = $b['role'] ?? '';
 
-    $allowed = ['student', 'teacher', 'officer', 'soj', 'admin'];
+    $allowed = ['student', 'teacher', 'officer', 'soj', 'center', 'admin'];
     if (!in_array($role, $allowed, true)) json_err('Invalid role');
 
     // check duplicate username

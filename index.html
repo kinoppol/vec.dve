@@ -518,7 +518,8 @@ class Component extends DCLogic {
       {id:'teacher',icon:'👨‍🏫',label:'ครู/บุคลากร'},
       {id:'officer',icon:'🏫',label:'เจ้าหน้าที่'},
       {id:'soj',icon:'🏢',label:'สอจ.'},
-      {id:'admin',icon:'⚙️',label:'ศูนย์ทวิภาคี'},
+      {id:'center',icon:'⚙️',label:'ศูนย์ทวิภาคี'},
+      {id:'admin',icon:'🛡️',label:'Admin'},
     ];
     const doLogin=async()=>{
       this.setState({lLoad:true});
@@ -527,8 +528,8 @@ class Component extends DCLogic {
         this.setState({loggedIn:true,role:d.role,name:d.name,inst:d.institution,lLoad:false,page:'dashboard'});
         this.loadData();
       } catch(e) {
-        const names={student:'นายสมชาย ใจดี',teacher:'อ.วิเชียร สุขสันต์',officer:'น.ส.สุภา มานะดี',soj:'ผอ.ประกิต เจริญกิจ',admin:'นายณรงค์ รักษ์ชาติ'};
-        const insts={student:'วิทยาลัยเทคนิคกรุงเทพ',teacher:'วิทยาลัยเทคนิคกรุงเทพ',officer:'วิทยาลัยเทคนิคกรุงเทพ',soj:'สอจ.ชลบุรี',admin:'ศูนย์ทวิภาคี สอศ.'};
+        const names={student:'นายสมชาย ใจดี',teacher:'อ.วิเชียร สุขสันต์',officer:'น.ส.สุภา มานะดี',soj:'ผอ.ประกิต เจริญกิจ',center:'นายณรงค์ รักษ์ชาติ',admin:'นายวิทยา ระบบดี'};
+        const insts={student:'วิทยาลัยเทคนิคกรุงเทพ',teacher:'วิทยาลัยเทคนิคกรุงเทพ',officer:'วิทยาลัยเทคนิคกรุงเทพ',soj:'สอจ.ชลบุรี',center:'ศูนย์ทวิภาคี สอศ.',admin:'ศูนย์ทวิภาคี สอศ.'};
         this.setState({loggedIn:true,role:lRole,name:names[lRole]||'ผู้ใช้งาน',inst:insts[lRole]||'สถานศึกษา',lLoad:false,page:'dashboard'});
         this.loadData();
       }
@@ -549,7 +550,7 @@ class Component extends DCLogic {
         ),
         H('div',{style:{marginBottom:20}},
           H('div',{style:{fontSize:11,color:c.t2,marginBottom:8,fontWeight:600}},'ประเภทผู้ใช้งาน'),
-          H('div',{style:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6}},
+          H('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}},
             ...roles.map(r=>H('button',{key:r.id,onClick:()=>this.setState({lRole:r.id}),style:{padding:'10px 6px',borderRadius:9,cursor:'pointer',fontFamily:"'Sarabun',sans-serif",fontSize:11,fontWeight:lRole===r.id?700:400,background:lRole===r.id?c.P:c.s2,color:lRole===r.id?'#fff':c.t2,border:`2px solid ${lRole===r.id?c.P:c.br}`,textAlign:'center',transition:'all .15s'}},
               H('div',{style:{fontSize:18,marginBottom:3}},r.icon),r.label)),
           ),
@@ -1232,9 +1233,9 @@ class Component extends DCLogic {
   renderUsers = () => {
     const H=this.h, c=this.c();
     const{usrSearch,usrRole,usrSel,usrForm,usrFormData,dUsers}=this.state;
-    const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',admin:'Admin (ผู้ดูแลระบบ)'};
-    const roleColor={student:c.IN,teacher:c.OK,officer:c.G,soj:c.WA,admin:c.P};
-    const roles=['','student','teacher','officer','soj','admin'];
+    const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',center:'ศูนย์ทวิภาคี',admin:'Admin'};
+    const roleColor={student:c.IN,teacher:c.OK,officer:c.G,soj:c.WA,center:c.P,admin:'#7B1D2D'};
+    const roles=['','student','teacher','officer','soj','center','admin'];
 
     const filtered=dUsers.filter(u=>{
       const rOk=!usrRole||u.role===usrRole;

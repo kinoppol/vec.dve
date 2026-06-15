@@ -74,7 +74,8 @@ INSERT INTO enterprise_aliases (enterprise_id, alias) VALUES
 -- ── Users ──────────────────────────────────────────────────────────────────
 -- Demo users — password for non-students is 'dve2568'
 INSERT INTO users (role, name, institution, college_id, username, password_hash) VALUES
-  ('admin',   'นายณรงค์ รักษ์ชาติ',   'ศูนย์ทวิภาคี สอศ.',           NULL, 'admin',   '$2y$12$zN7VlU1LRKqJ7vQzl7H/y.DkNLioH1FRe99C3MaOe5mfaVHnJHB/6'),
+  ('center',  'นายณรงค์ รักษ์ชาติ',   'ศูนย์ทวิภาคี สอศ.',           NULL, 'center',  '$2y$12$zN7VlU1LRKqJ7vQzl7H/y.DkNLioH1FRe99C3MaOe5mfaVHnJHB/6'),
+  ('admin',   'นายวิทยา ระบบดี',       'ศูนย์ทวิภาคี สอศ.',           NULL, 'admin',   '$2y$12$zN7VlU1LRKqJ7vQzl7H/y.DkNLioH1FRe99C3MaOe5mfaVHnJHB/6'),
   ('officer', 'น.ส.สุภา มานะดี',       'วิทยาลัยเทคนิคกรุงเทพ',        1,    'officer', '$2y$12$zN7VlU1LRKqJ7vQzl7H/y.DkNLioH1FRe99C3MaOe5mfaVHnJHB/6'),
   ('teacher', 'อ.วิเชียร สุขสันต์',    'วิทยาลัยเทคนิคกรุงเทพ',        1,    'teacher', '$2y$12$zN7VlU1LRKqJ7vQzl7H/y.DkNLioH1FRe99C3MaOe5mfaVHnJHB/6'),
   ('soj',     'ผอ.ประกิต เจริญกิจ',    'สำนักงานอาชีวศึกษาจังหวัดชลบุรี', NULL, 'soj',  '$2y$12$zN7VlU1LRKqJ7vQzl7H/y.DkNLioH1FRe99C3MaOe5mfaVHnJHB/6');

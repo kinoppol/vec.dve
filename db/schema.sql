@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS enterprise_aliases (
 -- ── Users ──────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
   id               INT AUTO_INCREMENT PRIMARY KEY,
-  role             ENUM('student','teacher','officer','soj','admin') NOT NULL,
+  role             ENUM('student','teacher','officer','soj','center','admin') NOT NULL,
   name             VARCHAR(200) NOT NULL,
   institution      VARCHAR(200),
   college_id       INT NULL,
