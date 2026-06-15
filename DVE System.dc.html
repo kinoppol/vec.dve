@@ -132,7 +132,7 @@ class Component extends DCLogic {
   }
 
   api = async (path, opts = {}) => {
-    const r = await fetch('/api/' + path, {
+    const r = await fetch('./api/' + path, {
       ...opts,
       headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
