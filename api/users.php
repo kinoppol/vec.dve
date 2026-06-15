@@ -65,21 +65,30 @@ if (method('POST')) {
         ? password_hash($b['national_id'], PASSWORD_BCRYPT)
         : null;
 
-    $st = $db->prepare(
-        'INSERT INTO users (role, name, institution, username, password_hash, student_code, national_id_hash)
-         VALUES (?,?,?,?,?,?,?)'
-    );
-    $st->execute([
-        $role,
-        $b['name']         ?? '',
-        $b['institution']  ?? '',
-        !empty($b['username'])     ? $b['username']    : null,
-        $passwordHash,
-        !empty($b['student_code']) ? $b['student_code']: null,
-        $nationalIdHash,
-    ]);
+    if (empty(trim($b['name'] ?? ''))) json_err('กรุณาระบุชื่อ-นามสกุล');
 
-    json_ok(['id' => $db->lastInsertId()], 201);
+    try {
+        $st = $db->prepare(
+            'INSERT INTO users (role, name, institution, username, password_hash, student_code, national_id_hash)
+             VALUES (?,?,?,?,?,?,?)'
+        );
+        $st->execute([
+            $role,
+            trim($b['name']         ?? ''),
+            trim($b['institution']  ?? ''),
+            !empty(trim($b['username'] ?? ''))     ? trim($b['username'])    : null,
+            $passwordHash,
+            !empty(trim($b['student_code'] ?? '')) ? trim($b['student_code']): null,
+            $nationalIdHash,
+        ]);
+    } catch (PDOException $e) {
+        if (str_contains($e->getMessage(), 'Duplicate entry')) {
+            json_err('ชื่อผู้ใช้นี้มีอยู่แล้ว');
+        }
+        json_err('ไม่สามารถบันทึกข้อมูลได้: ' . $e->getMessage());
+    }
+
+    json_ok(['id' => $db->lastInsertId()]);
 }
 
 // ── PATCH — update user ───────────────────────────────────────────────────

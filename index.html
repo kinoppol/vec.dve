@@ -224,6 +224,11 @@ class Component extends DCLogic {
 
   createUser = async () => {
     const fd = this.state.usrFormData;
+    if (!fd.name?.trim()) { alert('กรุณาระบุชื่อ-นามสกุล'); return; }
+    const isStudent = fd.role === 'student';
+    if (isStudent && !fd.student_code?.trim()) { alert('กรุณาระบุรหัสนักศึกษา'); return; }
+    if (!isStudent && !fd.username?.trim()) { alert('กรุณาระบุชื่อผู้ใช้งาน'); return; }
+    if (!isStudent && !fd.password?.trim()) { alert('กรุณาระบุรหัสผ่าน'); return; }
     try {
       await this.api('users.php', { method: 'POST', body: fd });
       const users = await this.api('users.php');

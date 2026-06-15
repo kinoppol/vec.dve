@@ -1,4 +1,8 @@
 <?php
+// Suppress PHP notices/warnings so they don't corrupt JSON output
+error_reporting(0);
+ini_set('display_errors', '0');
+
 define('DB_HOST',    'localhost');
 define('DB_NAME',    'vec_dve');
 define('DB_USER',    'root');
