@@ -273,6 +273,14 @@ class Component extends DCLogic {
     } catch (e) {}
   }
 
+  hardDeleteUser = async (id, name) => {
+    if (!confirm(`ยืนยันการลบผู้ใช้ "${name}" ออกจากระบบถาวร?\nการกระทำนี้ไม่สามารถเรียกคืนได้`)) return;
+    try {
+      await this.api('users.php', { method: 'DELETE', body: { id, hard: true } });
+      this.setState({ dUsers: this.state.dUsers.filter(u => u.id !== id), usrSel: null, usrEdit: false });
+    } catch (e) { alert(e.message); }
+  }
+
   clearNotifs = async () => {
     try { await this.api('notifications.php', { method: 'POST', body: { action: 'mark_read' } }); } catch (e) {}
     this.setState({ notif: false, notifN: 0, dNotifs: this.state.dNotifs.map(n => ({ ...n, is_read: true })) });
@@ -1442,6 +1450,7 @@ class Component extends DCLogic {
             H('div',{style:{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}},
               selUser.active&&this.btn('🔒 ปิดการใช้งาน',()=>this.deleteUser(selUser.id),{v:'er',sm:true}),
               !selUser.active&&this.btn('🔓 เปิดใช้งาน',()=>this.updateUser(selUser.id,{username:selUser.username,active:true}),{v:'ok',sm:true}),
+              this.btn('🗑️ ลบผู้ใช้',()=>this.hardDeleteUser(selUser.id,selUser.name),{v:'er',sm:true}),
             ),
           ),
         ),

@@ -124,13 +124,18 @@ if (method('PATCH')) {
 
 // ── DELETE — remove user ──────────────────────────────────────────────────
 if (method('DELETE')) {
-    $b  = body();
-    $id = (int)($b['id'] ?? 0);
+    $b    = body();
+    $id   = (int)($b['id'] ?? 0);
+    $hard = !empty($b['hard']);
     if (!$id) json_err('Missing id');
 
-    // soft-delete: clear credentials so they cannot log in
-    $db->prepare('UPDATE users SET username = NULL, password_hash = NULL, student_code = NULL, national_id_hash = NULL WHERE id = ?')
-       ->execute([$id]);
+    if ($hard) {
+        $db->prepare('DELETE FROM users WHERE id = ?')->execute([$id]);
+    } else {
+        // soft-delete: clear credentials so they cannot log in
+        $db->prepare('UPDATE users SET username = NULL, password_hash = NULL, student_code = NULL, national_id_hash = NULL WHERE id = ?')
+           ->execute([$id]);
+    }
 
     json_ok(['ok' => true]);
 }

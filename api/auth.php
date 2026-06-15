@@ -68,9 +68,9 @@ if (method('POST')) {
                 $st = pdo()->prepare(
                     'SELECT u.*, c.name AS college_name FROM users u
                      LEFT JOIN colleges c ON u.college_id = c.id
-                     WHERE u.role = ? AND u.username = ? LIMIT 1'
+                     WHERE u.username = ? LIMIT 1'
                 );
-                $st->execute([$role, $username]);
+                $st->execute([$username]);
                 $row = $st->fetch();
                 if ($row && password_verify($password, $row['password_hash'])) {
                     $user = $row;
