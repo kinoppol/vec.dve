@@ -34,11 +34,24 @@ CREATE TABLE IF NOT EXISTS kpi_field (
 
 -- ── Colleges ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS colleges (
-  id       INT AUTO_INCREMENT PRIMARY KEY,
-  code     VARCHAR(20) NOT NULL UNIQUE,
-  name     VARCHAR(200) NOT NULL,
-  province VARCHAR(100),
-  type     VARCHAR(50)
+  id                   INT AUTO_INCREMENT PRIMARY KEY,
+  code                 VARCHAR(20)   NOT NULL UNIQUE,
+  name                 VARCHAR(200)  NOT NULL,
+  province             VARCHAR(100),
+  type                 VARCHAR(50),
+  province_vocational  VARCHAR(100),
+  region               VARCHAR(100),
+  address_no           VARCHAR(50),
+  moo                  VARCHAR(20),
+  soi                  VARCHAR(100),
+  road                 VARCHAR(100),
+  sub_district         VARCHAR(100),
+  district             VARCHAR(100),
+  postcode             VARCHAR(5),
+  phone                VARCHAR(50),
+  latitude             DECIMAL(10,8),
+  longitude            DECIMAL(11,8),
+  website              VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── Enterprises ───────────────────────────────────────────────────────────
