@@ -42,6 +42,7 @@ class Component extends DCLogic {
     repType:'internship',
     usrTab:'list', usrSearch:'', usrRole:'', usrSel:null, usrForm:false,
     usrFormData:{role:'teacher',name:'',institution:'',username:'',password:'',student_code:'',national_id:''},
+    usrColOpts:[], usrColShow:false,
     dUsers:[],
     dSettings:{sys_requests:true,sys_ppp:true,sys_supervision:true,sys_finance:true},
     // ── API data (preloaded with demo values; overwritten from API) ──────
@@ -244,6 +245,14 @@ class Component extends DCLogic {
       await this.api('users.php', { method: 'PATCH', body: { id, ...patch } });
       this.setState({ dUsers: this.state.dUsers.map(u => u.id === id ? { ...u, ...patch } : u), usrSel: null });
     } catch (e) { alert(e.message); }
+  }
+
+  searchColleges = async (q) => {
+    if (!q || q.length < 2) { this.setState({usrColOpts:[],usrColShow:false}); return; }
+    try {
+      const data = await this.api('colleges.php?q=' + encodeURIComponent(q));
+      this.setState({usrColOpts:data, usrColShow:data.length>0});
+    } catch(e) { this.setState({usrColOpts:[],usrColShow:false}); }
   }
 
   updateSetting = async (key, value) => {
@@ -1252,7 +1261,7 @@ class Component extends DCLogic {
   /* ─── USERS PAGE (Admin only) ─────────────────────────────────────── */
   renderUsers = () => {
     const H=this.h, c=this.c();
-    const{usrSearch,usrRole,usrSel,usrForm,usrFormData,dUsers}=this.state;
+    const{usrSearch,usrRole,usrSel,usrForm,usrFormData,usrColOpts,usrColShow,dUsers}=this.state;
     const roleLabel={student:'นักศึกษา',teacher:'ครู/บุคลากร',officer:'เจ้าหน้าที่',soj:'สอจ.',center:'ศูนย์ทวิภาคี',admin:'Admin'};
     const roleColor={student:c.IN,teacher:c.OK,officer:c.G,soj:c.WA,center:c.P,admin:'#7B1D2D'};
     const roles=['','student','teacher','officer','soj','center','admin'];
@@ -1337,7 +1346,33 @@ class Component extends DCLogic {
             ),
           ),
           inp('ชื่อ-นามสกุล','name','text','เช่น นายสมชาย ใจดี'),
-          inp('สถานศึกษา / หน่วยงาน','institution','text','เช่น วิทยาลัยเทคนิคกรุงเทพ'),
+          H('div',{style:{position:'relative'}},
+            H('label',{style:{fontSize:11,color:c.t2,fontWeight:600,display:'block',marginBottom:3}},'สถานศึกษา / หน่วยงาน'),
+            H('input',{type:'text',value:usrFormData.institution||'',placeholder:'พิมพ์ชื่อสถานศึกษาเพื่อค้นหา...',
+              onChange:e=>{
+                const v=e.target.value;
+                this.setState({usrFormData:{...usrFormData,institution:v}});
+                this.searchColleges(v);
+              },
+              onBlur:()=>setTimeout(()=>this.setState({usrColShow:false}),150),
+              onFocus:()=>{if(usrFormData.institution&&usrColOpts.length)this.setState({usrColShow:true});},
+              style:{width:'100%',padding:'8px 10px',borderRadius:7,border:`1.5px solid ${c.br}`,background:c.s2,color:c.tx,fontSize:12,fontFamily:"'Sarabun',sans-serif",outline:'none',boxSizing:'border-box'},
+            }),
+            usrColShow&&usrColOpts.length>0&&H('div',{style:{position:'absolute',top:'100%',left:0,right:0,background:c.sf,border:`1px solid ${c.br}`,borderRadius:8,boxShadow:'0 4px 16px rgba(0,0,0,.12)',zIndex:200,maxHeight:220,overflowY:'auto',marginTop:2}},
+              ...usrColOpts.map((col,i)=>H('div',{key:col.id,
+                onMouseDown:()=>{
+                  this.setState({usrFormData:{...usrFormData,institution:col.name},usrColShow:false,usrColOpts:[]});
+                },
+                style:{padding:'9px 12px',cursor:'pointer',borderBottom:i<usrColOpts.length-1?`1px solid ${c.b2}`:'none',
+                  transition:'background .1s',':hover':{background:c.PP}},
+                onMouseEnter:e=>e.currentTarget.style.background=c.PP,
+                onMouseLeave:e=>e.currentTarget.style.background='transparent',
+              }},
+                H('div',{style:{fontSize:12,fontWeight:600,color:c.tx}},col.name),
+                H('div',{style:{fontSize:10,color:c.t3,marginTop:1}},col.province+(col.type?' · '+col.type:'')),
+              )),
+            ),
+          ),
           isStudent?H(React.Fragment,null,
             inp('รหัสนักศึกษา','student_code','text','เช่น 6601012345'),
             inp('เลขประจำตัวประชาชน (ใช้เป็นรหัสผ่าน)','national_id','password','X-XXXX-XXXXX-XX-X'),
